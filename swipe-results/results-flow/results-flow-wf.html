@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Results Flow — Wireframe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
+    body { background:#2a2a2a; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px 20px; gap:32px; flex-wrap:wrap; }
+
+    /* ── PHONE SHELL ── */
+    .phone {
+      width:390px; height:844px; border-radius:48px; overflow:hidden;
+      position:relative; flex-shrink:0;
+      box-shadow: 0 0 0 2px #555, 0 0 0 12px #1c1c1e, 0 40px 100px rgba(0,0,0,0.7);
+      background:#EFEFEF;
+    }
+
+    /* ── SCREEN SYSTEM ── */
+    .screen { position:absolute; inset:0; overflow:hidden; display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.32s cubic-bezier(0.4,0,0.2,1); }
+    .screen.active { transform:translateX(0); }
+    .screen.behind { transform:translateX(-22%); }
+    .scroll { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+
+    /* ── STATUS BAR ── */
+    .sb { display:flex; justify-content:space-between; align-items:center; padding:14px 24px 8px; flex-shrink:0; }
+    .sb-time { font-size:15px; font-weight:700; color:#111; }
+    .sb-icons { font-size:11px; font-weight:600; color:#555; }
+
+    /* ══════════════════════════════
+       SCREEN 0 — TEAM PAGE ENTRY
+    ══════════════════════════════ */
+    #s0 { background:#fff; transform:translateX(0); }
+
+    .wf-hdr {
+      background:#fff; border-bottom:1px solid #E0E0E0;
+      flex-shrink:0;
+    }
+    .wf-hdr-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:4px 16px 10px;
+    }
+    .wf-back { font-size:20px; color:#aaa; }
+    .wf-league { display:flex; align-items:center; gap:5px; }
+    .wf-league-name { font-size:14px; font-weight:700; color:#111; }
+    .wf-league-chev { font-size:11px; color:#aaa; }
+    .wf-chat { font-size:18px; color:#aaa; }
+
+    .wf-tabs { display:flex; border-bottom:1px solid #E0E0E0; }
+    .wf-tab { flex:1; text-align:center; padding:9px 0; font-size:12px; font-weight:700; color:#aaa; border-bottom:2px solid transparent; cursor:pointer; }
+    .wf-tab.on { color:#333; border-bottom-color:#333; }
+
+    /* action pills */
+    .pills-row { display:flex; gap:8px; padding:10px 16px; overflow-x:auto; scrollbar-width:none; }
+    .pills-row::-webkit-scrollbar { display:none; }
+    .pill {
+      display:flex; align-items:center; gap:5px;
+      border:1.5px solid #D8D8D8; border-radius:20px;
+      padding:6px 11px; font-size:11px; font-weight:700; color:#555;
+      white-space:nowrap; cursor:pointer; flex-shrink:0;
+    }
+    .pill.highlight { border-color:#333; color:#333; background:#F5F5F5; }
+    .pill-badge { background:#333; color:#fff; font-size:9px; font-weight:800; width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
+    /* roster rows */
+    .roster-section { padding:6px 16px 4px; font-size:10px; font-weight:800; color:#aaa; text-transform:uppercase; letter-spacing:.6px; }
+    .roster-row { display:flex; align-items:center; gap:10px; padding:9px 16px; border-bottom:1px solid #F0F0F0; }
+    .rr-pos { width:26px; height:26px; border-radius:5px; background:#D0D0D0; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#666; flex-shrink:0; }
+    .rr-logo { width:26px; height:26px; object-fit:contain; flex-shrink:0; }
+    .rr-logo-ph { width:26px; height:26px; background:#E0E0E0; border-radius:50%; flex-shrink:0; }
+    .rr-info { flex:1; }
+    .rr-name { font-size:12px; font-weight:800; color:#111; }
+    .rr-game { font-size:10px; color:#999; margin-top:1px; }
+    .rr-proj { font-size:13px; font-weight:800; color:#333; }
+
+    /* ── BOTTOM NAV ── */
+    .bnav { background:#fff; border-top:1px solid #E0E0E0; display:flex; padding:8px 0 28px; flex-shrink:0; }
+    .bn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
+    .bn-icon { font-size:18px; }
+    .bn-lbl { font-size:9px; font-weight:700; color:#aaa; }
+    .bn.on .bn-lbl { color:#333; }
+
+    /* ══════════════════════════════
+       SCREEN 1 — RESULTS HUB
+    ══════════════════════════════ */
+    #s1 { background:#EFEFEF; }
+
+    .hub-hdr {
+      background:#fff; border-bottom:1px solid #E0E0E0; flex-shrink:0;
+    }
+    .hub-nav {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:4px 16px 10px;
+    }
+    .hub-back { display:flex; align-items:center; gap:2px; color:#333; font-size:13px; font-weight:700; cursor:pointer; }
+    .hub-back-arrow { font-size:22px; line-height:1; margin-top:-2px; }
+    .hub-title { font-size:16px; font-weight:800; color:#111; }
+    .hub-settings { width:30px; height:30px; background:#F0F0F0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; color:#888; }
+
+    .hub-tabs { display:flex; }
+    .hub-tab { flex:1; text-align:center; padding:9px 0; font-size:13px; font-weight:700; color:#aaa; border-bottom:2.5px solid transparent; cursor:pointer; }
+    .hub-tab.on { color:#333; border-bottom-color:#333; }
+
+    /* ── ACCURACY BANNER ── */
+    .acc-banner {
+      margin:14px 16px 0;
+      background:#fff; border-radius:16px;
+      border:1px solid #E0E0E0;
+      overflow:hidden;
+    }
+    .acc-inner { padding:14px 16px 10px; }
+    .acc-eyebrow { font-size:10px; font-weight:800; color:#aaa; text-transform:uppercase; letter-spacing:.6px; margin-bottom:10px; }
+    .acc-main { display:flex; align-items:flex-end; gap:6px; margin-bottom:2px; }
+    .acc-big { font-size:38px; font-weight:800; color:#111; line-height:1; }
+    .acc-of { font-size:16px; font-weight:500; color:#aaa; margin-bottom:6px; }
+    .acc-label { font-size:13px; font-weight:600; color:#555; margin-bottom:10px; }
+    .acc-bar-track { height:6px; background:#EBEBEB; border-radius:99px; overflow:hidden; margin-bottom:10px; }
+    .acc-bar-fill { height:100%; background:#333; border-radius:99px; width:75%; }
+    .acc-meta { display:flex; gap:16px; padding-top:8px; border-top:1px solid #F0F0F0; }
+    .acc-stat { display:flex; flex-direction:column; gap:1px; }
+    .acc-stat-val { font-size:15px; font-weight:800; color:#111; }
+    .acc-stat-lbl { font-size:10px; color:#aaa; font-weight:600; }
+
+    .acc-annotation {
+      background:#FFFBEA; border-top:1px dashed #D4C000;
+      padding:7px 14px; font-size:11px; color:#7A6800;
+      font-style:italic;
+    }
+
+    /* ── SECTION LABEL ── */
+    .sec-lbl {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 16px 8px;
+    }
+    .sec-lbl-txt { font-size:13px; font-weight:800; color:#111; }
+    .sec-lbl-sub { font-size:11px; color:#aaa; font-weight:600; }
+
+    /* ══════════════════════════════
+       MY QUESTIONS RESULT CARD
+       (New format — results-first)
+    ══════════════════════════════ */
+    .qcard {
+      background:#fff; border-radius:16px;
+      margin:0 16px 10px;
+      border:1px solid #E0E0E0;
+      overflow:hidden;
+    }
+
+    /* Card header: meta info */
+    .qc-meta {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 14px 8px;
+      border-bottom:1px solid #F0F0F0;
+    }
+    .qc-meta-left { font-size:11px; font-weight:700; color:#888; }
+    .qc-meta-right { font-size:11px; font-weight:600; color:#aaa; }
+
+    /* Result rows */
+    .qc-result-row {
+      display:flex; align-items:center; gap:9px;
+      padding:9px 14px;
+    }
+    .qc-result-row + .qc-result-row { border-top:1px solid #F8F8F8; }
+
+    .qc-hs {
+      width:34px; height:34px; border-radius:50%;
+      object-fit:cover; object-position:top;
+      border:2px solid #E0E0E0; flex-shrink:0;
+    }
+    .qc-hs.winner { border-color:#333; }
+
+    .qc-logo { width:20px; height:20px; object-fit:contain; flex-shrink:0; }
+
+    .qc-player-info { flex:1; min-width:0; }
+    .qc-player-name { font-size:12px; font-weight:700; color:#333; }
+    .qc-player-sub { font-size:10px; color:#aaa; margin-top:1px; }
+
+    .qc-bar-col { width:90px; flex-shrink:0; }
+    .qc-bar { height:5px; background:#EBEBEB; border-radius:99px; overflow:hidden; margin-bottom:2px; }
+    .qc-bar-fill { height:100%; background:#C0C0C0; border-radius:99px; }
+    .qc-bar-fill.winner { background:#333; }
+
+    .qc-pct { font-size:13px; font-weight:800; color:#aaa; text-align:right; }
+    .qc-pct.winner { color:#111; }
+
+    /* Expert picks row */
+    .qc-experts {
+      display:flex; align-items:center; gap:6px;
+      padding:7px 14px;
+      border-top:1px solid #F0F0F0;
+      background:#FAFAFA;
+      flex-wrap:wrap;
+    }
+    .qc-exp-pill {
+      display:flex; align-items:center; gap:3px;
+      font-size:10px; font-weight:700; color:#555;
+      background:#F0F0F0; border-radius:20px;
+      padding:3px 7px;
+    }
+
+    /* Recommendation strip */
+    .qc-rec {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:9px 14px;
+      border-top:1px solid #F0F0F0;
+    }
+    .qc-rec-txt { font-size:12px; color:#555; }
+    .qc-rec-txt strong { color:#111; font-weight:800; }
+
+    .qc-actions { display:flex; gap:7px; }
+    .qc-btn-primary {
+      background:#333; color:#fff;
+      font-size:11px; font-weight:800;
+      padding:7px 13px; border-radius:8px;
+      cursor:pointer; border:none; font-family:inherit;
+      white-space:nowrap;
+    }
+    .qc-btn-secondary {
+      background:#fff; color:#333;
+      border:1.5px solid #D8D8D8;
+      font-size:11px; font-weight:700;
+      padding:7px 11px; border-radius:8px;
+      cursor:pointer; font-family:inherit;
+      white-space:nowrap;
+    }
+
+    .qc-annotation {
+      background:#FFFBEA; border-top:1px dashed #D4C000;
+      padding:6px 14px; font-size:10px; color:#7A6800;
+      font-style:italic;
+    }
+
+    /* ══════════════════════════════
+       MY VOTES COMPACT CARD
+    ══════════════════════════════ */
+    .vc {
+      background:#fff; border-radius:16px;
+      margin:0 16px 10px;
+      border:1px solid #E0E0E0;
+      overflow:hidden;
+    }
+    .vc-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:9px 14px 8px; border-bottom:1px solid #F0F0F0;
+    }
+    .vc-context { font-size:11px; font-weight:700; color:#888; }
+    .vc-outcome { font-size:11px; font-weight:800; border-radius:20px; padding:3px 9px; }
+    .vc-outcome.agree { background:#E8F5E9; color:#2E7D32; }
+    .vc-outcome.against { background:#FFF8E1; color:#856404; }
+
+    .vc-player { display:flex; align-items:center; gap:9px; padding:9px 14px; }
+    .vc-player.your-pick { background:#FAFAFA; border-left:3px solid #333; }
+    .vc-hs {
+      width:34px; height:34px; border-radius:50%;
+      object-fit:cover; object-position:top;
+      border:2px solid #E0E0E0; flex-shrink:0;
+    }
+    .vc-player.your-pick .vc-hs { border-color:#999; }
+    .vc-logo { width:20px; height:20px; object-fit:contain; flex-shrink:0; }
+    .vc-info { flex:1; display:flex; align-items:center; gap:5px; }
+    .vc-name { font-size:12px; font-weight:700; color:#111; }
+    .vc-pos { font-size:9px; font-weight:800; background:#F0F0F0; color:#777; border-radius:3px; padding:1px 4px; }
+    .vc-pick-tag { font-size:9px; font-weight:800; color:#444; background:#E8E8E8; border-radius:3px; padding:1px 5px; }
+    .vc-proj { font-size:12px; font-weight:600; color:#999; flex-shrink:0; }
+
+    .vc-bar-wrap { padding:2px 14px; }
+    .vc-bar { height:4px; background:#EBEBEB; border-radius:99px; overflow:hidden; display:flex; }
+    .vc-bar-fill { height:100%; border-radius:99px; background:#888; }
+    .vc-bar-labels { display:flex; justify-content:space-between; margin-top:3px; }
+    .vc-bar-lbl { font-size:10px; font-weight:700; color:#ccc; }
+    .vc-bar-lbl.lead { color:#555; }
+
+    .vc-action {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:8px 14px 10px; border-top:1px solid #F0F0F0;
+    }
+    .vc-outcome-txt { font-size:11px; font-weight:700; }
+    .vc-outcome-txt.good { color:#2E7D32; }
+    .vc-outcome-txt.warn { color:#856404; }
+    .vc-action-btns { display:flex; gap:6px; }
+    .vc-btn-sm {
+      background:#333; color:#fff;
+      font-size:11px; font-weight:800;
+      padding:6px 12px; border-radius:8px;
+      cursor:pointer; border:none; font-family:inherit;
+    }
+    .vc-btn-sm.outline {
+      background:#fff; color:#333;
+      border:1.5px solid #D8D8D8;
+    }
+
+    /* ── ANNOTATION LABELS ── */
+    .ann {
+      font-size:10px; color:#B8860B; font-style:italic;
+      padding:0 16px 8px;
+    }
+
+    /* Toast */
+    .toast { position:absolute; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); background:#1c1c1e; color:white; font-size:13px; font-weight:600; padding:10px 20px; border-radius:22px; white-space:nowrap; opacity:0; transition:opacity .25s,transform .25s; pointer-events:none; z-index:999; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* Spacer */
+    .spacer { height:20px; }
+
+    /* ── SCREEN 2: QUESTION DETAIL ── */
+    #s2 { background:#EFEFEF; }
+
+    /* Detail card — bigger breakdown */
+    .detail-card {
+      background:#fff; border-radius:16px;
+      margin:14px 16px 10px;
+      border:1px solid #E0E0E0;
+      overflow:hidden;
+    }
+    .dc-players {
+      display:flex; padding:16px;
+      gap:0; border-bottom:1px solid #F0F0F0;
+      position:relative;
+    }
+    .dc-player-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .dc-hs {
+      width:64px; height:64px; border-radius:50%;
+      object-fit:cover; object-position:top;
+      border:3px solid #E0E0E0;
+    }
+    .dc-name { font-size:13px; font-weight:800; color:#111; }
+    .dc-sub { font-size:10px; color:#aaa; }
+    .dc-vs { display:flex; align-items:center; justify-content:center; padding:0 8px; }
+    .dc-vs-circle { width:26px; height:26px; border:1.5px solid #E0E0E0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#aaa; }
+
+    .dc-vote-big { display:flex; border-bottom:1px solid #F0F0F0; }
+    .dc-vote-col { flex:1; padding:12px 16px; text-align:center; }
+    .dc-vote-col + .dc-vote-col { border-left:1px solid #F0F0F0; }
+    .dc-pct { font-size:32px; font-weight:800; color:#111; line-height:1; }
+    .dc-pct.dim { color:#C0C0C0; }
+    .dc-vote-lbl { font-size:11px; color:#aaa; margin-top:3px; }
+    .dc-winner-badge { font-size:10px; font-weight:800; background:#EBEBEB; color:#333; border-radius:20px; padding:2px 8px; margin-top:4px; display:inline-block; }
+
+    .dc-bar-row { padding:10px 16px; border-bottom:1px solid #F0F0F0; }
+    .dc-bar { height:6px; background:#EBEBEB; border-radius:99px; overflow:hidden; }
+    .dc-bar-fill { height:100%; background:#333; border-radius:99px; width:75%; }
+
+    .dc-experts { padding:10px 14px; border-bottom:1px solid #F0F0F0; display:flex; flex-direction:column; gap:7px; }
+    .dc-exp-row { display:flex; align-items:center; justify-content:space-between; }
+    .dc-exp-left { display:flex; align-items:center; gap:7px; }
+    .dc-exp-avatar { width:22px; height:22px; background:#E8E8E8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#666; flex-shrink:0; }
+    .dc-exp-name { font-size:12px; color:#555; font-weight:600; }
+    .dc-exp-name strong { color:#111; font-weight:800; }
+    .dc-exp-pick { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:700; color:#111; }
+    .dc-exp-logo { width:16px; height:16px; object-fit:contain; }
+
+    .dc-actions { padding:12px 14px 14px; display:flex; gap:8px; }
+    .dc-btn-primary { flex:1; background:#333; color:#fff; font-size:13px; font-weight:800; padding:12px; border-radius:12px; text-align:center; cursor:pointer; }
+    .dc-btn-secondary { flex:1; background:#fff; color:#333; border:1.5px solid #D8D8D8; font-size:13px; font-weight:700; padding:12px; border-radius:12px; text-align:center; cursor:pointer; }
+
+    .dc-annotation {
+      background:#FFFBEA; border-top:1px dashed #D4C000;
+      padding:7px 14px; font-size:10px; color:#7A6800;
+      font-style:italic; margin-top:-1px;
+    }
+  </style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- ══════════════════════════════
+       S0 — TEAM PAGE (ENTRY)
+  ══════════════════════════════ -->
+  <div id="s0" class="screen active">
+    <div class="wf-hdr">
+      <div class="sb"><span class="sb-time">9:41</span><span class="sb-icons">●●● WiFi 🔋</span></div>
+      <div class="wf-hdr-row">
+        <span class="wf-back">‹</span>
+        <div class="wf-league">
+          <img style="width:18px;height:18px;object-fit:contain;" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="">
+          <span class="wf-league-name">Super Seniors League</span>
+          <span class="wf-league-chev">∨</span>
+        </div>
+        <span class="wf-chat">💬</span>
+      </div>
+      <div class="wf-tabs">
+        <div class="wf-tab on">Team</div>
+        <div class="wf-tab">Matchup</div>
+        <div class="wf-tab">Players</div>
+        <div class="wf-tab">League</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <!-- Action pills — entry point -->
+      <div class="pills-row">
+        <div class="pill">⭐ Assistant GM</div>
+        <div class="pill">Player Updates <div class="pill-badge">2</div></div>
+        <div class="pill highlight" onclick="nav('s1','s0')">
+          Poll Results <div class="pill-badge">3</div>
+        </div>
+      </div>
+
+      <div style="margin:0 16px 10px;background:#FFFBEA;border:1px dashed #D4C000;border-radius:10px;padding:8px 12px;font-size:11px;color:#7A6800;font-style:italic;">
+        ✱ Entry point: badge = unread results only. Tapping jumps directly to Results Hub.
+      </div>
+
+      <div class="roster-section">Starters</div>
+
+      <div class="roster-row">
+        <div class="rr-pos">QB</div>
+        <img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="">
+        <div class="rr-info"><div class="rr-name">J. ALLEN</div><div class="rr-game">BUF · Sun 1pm v CLE</div></div>
+        <div class="rr-proj">24.6</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos">RB</div>
+        <img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt="">
+        <div class="rr-info"><div class="rr-name">S. BARKLEY</div><div class="rr-game">PHI · Sun 1pm v DAL</div></div>
+        <div class="rr-proj">19.8</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos">RB</div>
+        <img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt="">
+        <div class="rr-info"><div class="rr-name">D. HENRY</div><div class="rr-game">TEN · Sun 1pm v HOU</div></div>
+        <div class="rr-proj">14.2</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos">WR</div>
+        <img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="">
+        <div class="rr-info"><div class="rr-name">C. LAMB</div><div class="rr-game">DAL · Sun 1pm v PHI</div></div>
+        <div class="rr-proj">18.4</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos">WR</div>
+        <img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/mia.png" alt="">
+        <div class="rr-info"><div class="rr-name">T. HILL</div><div class="rr-game">MIA · Sun 1pm v NE</div></div>
+        <div class="rr-proj">14.8</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos">TE</div>
+        <img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="">
+        <div class="rr-info"><div class="rr-name">T. KELCE</div><div class="rr-game">KC · Sun 4:25pm v DEN</div></div>
+        <div class="rr-proj">12.1</div>
+      </div>
+      <div class="roster-row" style="margin-bottom:12px">
+        <div class="rr-pos">FLX</div>
+        <img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/min.png" alt="">
+        <div class="rr-info"><div class="rr-name">T. POLLARD</div><div class="rr-game">MIN · Sun 1pm v GB</div></div>
+        <div class="rr-proj">8.4</div>
+      </div>
+    </div>
+
+    <div class="bnav">
+      <div class="bn on"><div class="bn-icon">🏠</div><div class="bn-lbl" style="color:#333">Home</div></div>
+      <div class="bn"><div class="bn-icon">🎮</div><div class="bn-lbl">Games</div></div>
+      <div class="bn"><div class="bn-icon">📰</div><div class="bn-lbl">News</div></div>
+      <div class="bn"><div class="bn-icon">📊</div><div class="bn-lbl">Scores</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       S1 — RESULTS HUB
+  ══════════════════════════════ -->
+  <div id="s1" class="screen">
+    <div class="hub-hdr">
+      <div class="sb"><span class="sb-time">9:41</span><span class="sb-icons">●●● WiFi 🔋</span></div>
+      <div class="hub-nav">
+        <div class="hub-back" onclick="back('s0','s1')"><span class="hub-back-arrow">‹</span>Fantasy</div>
+        <div class="hub-title">Poll Results</div>
+        <div class="hub-settings">⚙</div>
+      </div>
+      <div class="hub-tabs">
+        <div class="hub-tab on" id="tab-q" onclick="switchTab('q')">My Questions</div>
+        <div class="hub-tab" id="tab-v" onclick="switchTab('v')">My Votes</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ── ACCURACY BANNER (always visible, above tabs) ── -->
+      <div class="acc-banner">
+        <div class="acc-inner">
+          <div class="acc-eyebrow">Week 9 · Your accuracy</div>
+          <div class="acc-main">
+            <div class="acc-big">3</div>
+            <div class="acc-of">of 4</div>
+          </div>
+          <div class="acc-label">with the community this week</div>
+          <div class="acc-bar-track">
+            <div class="acc-bar-fill"></div>
+          </div>
+          <div class="acc-meta">
+            <div class="acc-stat">
+              <div class="acc-stat-val">🔥 5</div>
+              <div class="acc-stat-lbl">Pick streak</div>
+            </div>
+            <div class="acc-stat">
+              <div class="acc-stat-val">97th</div>
+              <div class="acc-stat-lbl">Percentile</div>
+            </div>
+            <div class="acc-stat">
+              <div class="acc-stat-val">83%</div>
+              <div class="acc-stat-lbl">Season rate</div>
+            </div>
+          </div>
+        </div>
+        <div class="acc-annotation">
+          ✱ Accuracy lives ABOVE tabs — it's the universal hook. Both question-askers and voters care about this number.
+        </div>
+      </div>
+
+      <!-- ═══════════════════════
+           MY QUESTIONS TAB
+      ═══════════════════════ -->
+      <div id="content-q">
+
+        <div class="sec-lbl">
+          <span class="sec-lbl-txt">Your Questions</span>
+          <span class="sec-lbl-sub">2 polls · 1,634 voters</span>
+        </div>
+
+        <!-- Question card 1: Allen vs Mahomes -->
+        <div class="qcard" onclick="nav('s2','s1')">
+          <div class="qc-meta">
+            <span class="qc-meta-left">QB · Week 9 · BUF vs KC</span>
+            <span class="qc-meta-right">430 votes · 2d ago</span>
+          </div>
+
+          <!-- Winner row -->
+          <div class="qc-result-row">
+            <img class="qc-hs winner" src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" alt="Allen">
+            <img class="qc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="">
+            <div class="qc-player-info">
+              <div class="qc-player-name">J. Allen</div>
+              <div class="qc-player-sub">BUF · 17.4 proj</div>
+            </div>
+            <div class="qc-bar-col">
+              <div class="qc-bar"><div class="qc-bar-fill winner" style="width:75%"></div></div>
+            </div>
+            <div class="qc-pct winner">75%</div>
+          </div>
+
+          <!-- Loser row -->
+          <div class="qc-result-row">
+            <img class="qc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" alt="Mahomes">
+            <img class="qc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="">
+            <div class="qc-player-info">
+              <div class="qc-player-name">P. Mahomes</div>
+              <div class="qc-player-sub">KC · 19.4 proj</div>
+            </div>
+            <div class="qc-bar-col">
+              <div class="qc-bar"><div class="qc-bar-fill" style="width:25%"></div></div>
+            </div>
+            <div class="qc-pct">25%</div>
+          </div>
+
+          <!-- Expert picks -->
+          <div class="qc-experts">
+            <div class="qc-exp-pill">💎 Allen</div>
+            <div class="qc-exp-pill">JB: Mahomes</div>
+            <div class="qc-exp-pill">MH: Allen</div>
+          </div>
+
+          <!-- Recommendation + action -->
+          <div class="qc-rec">
+            <div class="qc-rec-txt">Community: <strong>Start Allen</strong></div>
+            <div class="qc-actions">
+              <button class="qc-btn-primary" onclick="event.stopPropagation();showToast('Allen set as starter!')">⚡ Start</button>
+              <button class="qc-btn-secondary" onclick="event.stopPropagation()">RA</button>
+            </div>
+          </div>
+        </div>
+        <div class="ann">✱ New card format for My Questions — results-first, no swipe visual. Shows winner prominently, experts compressed.</div>
+
+        <!-- Question card 2: Lamb vs Adams -->
+        <div class="qcard">
+          <div class="qc-meta">
+            <span class="qc-meta-left">WR · Week 9 · DAL vs LV</span>
+            <span class="qc-meta-right">1,204 votes · 2d ago</span>
+          </div>
+          <div class="qc-result-row">
+            <img class="qc-hs winner" src="https://a.espncdn.com/i/headshots/nfl/players/full/4241389.png" alt="Lamb">
+            <img class="qc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="">
+            <div class="qc-player-info">
+              <div class="qc-player-name">C. Lamb</div>
+              <div class="qc-player-sub">DAL · 18.4 proj</div>
+            </div>
+            <div class="qc-bar-col">
+              <div class="qc-bar"><div class="qc-bar-fill winner" style="width:71%"></div></div>
+            </div>
+            <div class="qc-pct winner">71%</div>
+          </div>
+          <div class="qc-result-row">
+            <img class="qc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/16800.png" alt="Adams">
+            <img class="qc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lv.png" alt="">
+            <div class="qc-player-info">
+              <div class="qc-player-name">D. Adams</div>
+              <div class="qc-player-sub">LV · 12.1 proj</div>
+            </div>
+            <div class="qc-bar-col">
+              <div class="qc-bar"><div class="qc-bar-fill" style="width:29%"></div></div>
+            </div>
+            <div class="qc-pct">29%</div>
+          </div>
+          <div class="qc-experts">
+            <div class="qc-exp-pill">💎 Lamb</div>
+            <div class="qc-exp-pill">JB: Lamb</div>
+            <div class="qc-exp-pill">MH: Adams</div>
+          </div>
+          <div class="qc-rec">
+            <div class="qc-rec-txt">Community: <strong>Add C. Lamb</strong></div>
+            <div class="qc-actions">
+              <button class="qc-btn-primary" onclick="showToast('Lamb added to roster!')">+ Add</button>
+              <button class="qc-btn-secondary">RA</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+      </div>
+
+      <!-- ═══════════════════════
+           MY VOTES TAB
+      ═══════════════════════ -->
+      <div id="content-v" style="display:none">
+
+        <div class="sec-lbl">
+          <span class="sec-lbl-txt">Your Votes</span>
+          <span class="sec-lbl-sub">4 this week</span>
+        </div>
+
+        <div class="ann" style="margin-top:-4px;">✱ Accuracy banner above is shared — no duplicate perf card here. Votes are compact and scannable.</div>
+
+        <!-- Vote 1: Allen — with majority -->
+        <div class="vc">
+          <div class="vc-head">
+            <span class="vc-context">QB · Wk 9 · BUF vs KC</span>
+            <span class="vc-outcome agree">✓ 75% agree</span>
+          </div>
+          <div class="vc-player your-pick">
+            <img class="vc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" alt="">
+            <img class="vc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="">
+            <div class="vc-info">
+              <span class="vc-name">J. Allen</span>
+              <span class="vc-pos">QB</span>
+              <span class="vc-pick-tag">Your pick</span>
+            </div>
+            <div class="vc-proj">17.4</div>
+          </div>
+          <div class="vc-bar-wrap">
+            <div class="vc-bar"><div class="vc-bar-fill" style="width:75%"></div></div>
+            <div class="vc-bar-labels"><span class="vc-bar-lbl lead">75%</span><span class="vc-bar-lbl">25%</span></div>
+          </div>
+          <div class="vc-player">
+            <img class="vc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" alt="">
+            <img class="vc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="">
+            <div class="vc-info"><span class="vc-name">P. Mahomes</span><span class="vc-pos">QB</span></div>
+            <div class="vc-proj">19.4</div>
+          </div>
+          <div class="vc-action">
+            <span class="vc-outcome-txt good">✓ With the majority</span>
+            <div class="vc-action-btns">
+              <button class="vc-btn-sm" onclick="showToast('Allen set as starter!')">⚡ Start</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vote 2: Henry — contrarian -->
+        <div class="vc">
+          <div class="vc-head">
+            <span class="vc-context">RB · Wk 9 · PHI vs TEN</span>
+            <span class="vc-outcome against">↗ Contrarian</span>
+          </div>
+          <div class="vc-player">
+            <img class="vc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3929630.png" alt="">
+            <img class="vc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt="">
+            <div class="vc-info"><span class="vc-name">S. Barkley</span><span class="vc-pos">RB</span></div>
+            <div class="vc-proj">19.8</div>
+          </div>
+          <div class="vc-bar-wrap">
+            <div class="vc-bar"><div class="vc-bar-fill" style="width:58%"></div></div>
+            <div class="vc-bar-labels"><span class="vc-bar-lbl lead">58%</span><span class="vc-bar-lbl">42%</span></div>
+          </div>
+          <div class="vc-player your-pick">
+            <img class="vc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3043078.png" alt="">
+            <img class="vc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt="">
+            <div class="vc-info">
+              <span class="vc-name">D. Henry</span>
+              <span class="vc-pos">RB</span>
+              <span class="vc-pick-tag">Your pick</span>
+            </div>
+            <div class="vc-proj">14.2</div>
+          </div>
+          <div class="vc-action">
+            <span class="vc-outcome-txt warn">58% picked Barkley</span>
+            <div class="vc-action-btns">
+              <button class="vc-btn-sm outline">RA</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vote 3: Lamb — agree -->
+        <div class="vc">
+          <div class="vc-head">
+            <span class="vc-context">WR · Wk 9 · DAL vs NYG</span>
+            <span class="vc-outcome agree">✓ 71% agree</span>
+          </div>
+          <div class="vc-player your-pick">
+            <img class="vc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/4241389.png" alt="">
+            <img class="vc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="">
+            <div class="vc-info">
+              <span class="vc-name">C. Lamb</span><span class="vc-pos">WR</span>
+              <span class="vc-pick-tag">Your pick</span>
+            </div>
+            <div class="vc-proj">18.4</div>
+          </div>
+          <div class="vc-bar-wrap">
+            <div class="vc-bar"><div class="vc-bar-fill" style="width:71%"></div></div>
+            <div class="vc-bar-labels"><span class="vc-bar-lbl lead">71%</span><span class="vc-bar-lbl">29%</span></div>
+          </div>
+          <div class="vc-player">
+            <img class="vc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/16800.png" alt="">
+            <img class="vc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lv.png" alt="">
+            <div class="vc-info"><span class="vc-name">D. Adams</span><span class="vc-pos">WR</span></div>
+            <div class="vc-proj">12.1</div>
+          </div>
+          <div class="vc-action">
+            <span class="vc-outcome-txt good">✓ With the majority</span>
+            <div class="vc-action-btns">
+              <button class="vc-btn-sm" onclick="showToast('Lamb set as starter!')">⚡ Start</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vote 4: Kelce -->
+        <div class="vc" style="margin-bottom:24px">
+          <div class="vc-head">
+            <span class="vc-context">TE · Wk 9 · KC vs DEN</span>
+            <span class="vc-outcome agree">✓ 82% agree</span>
+          </div>
+          <div class="vc-player your-pick">
+            <img class="vc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/15847.png" alt="">
+            <img class="vc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="">
+            <div class="vc-info">
+              <span class="vc-name">T. Kelce</span><span class="vc-pos">TE</span>
+              <span class="vc-pick-tag">Your pick</span>
+            </div>
+            <div class="vc-proj">12.1</div>
+          </div>
+          <div class="vc-bar-wrap">
+            <div class="vc-bar"><div class="vc-bar-fill" style="width:82%"></div></div>
+            <div class="vc-bar-labels"><span class="vc-bar-lbl lead">82%</span><span class="vc-bar-lbl">18%</span></div>
+          </div>
+          <div class="vc-player">
+            <img class="vc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/4430027.png" alt="">
+            <img class="vc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/det.png" alt="">
+            <div class="vc-info"><span class="vc-name">S. LaPorta</span><span class="vc-pos">TE</span></div>
+            <div class="vc-proj">9.3</div>
+          </div>
+          <div class="vc-action">
+            <span class="vc-outcome-txt good">✓ With the majority</span>
+            <div class="vc-action-btns">
+              <button class="vc-btn-sm" onclick="showToast('Kelce set as starter!')">⚡ Start</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       S2 — QUESTION DETAIL
+  ══════════════════════════════ -->
+  <div id="s2" class="screen">
+    <div class="hub-hdr">
+      <div class="sb"><span class="sb-time">9:41</span><span class="sb-icons">●●● WiFi 🔋</span></div>
+      <div class="hub-nav">
+        <div class="hub-back" onclick="back('s1','s2')"><span class="hub-back-arrow">‹</span>Results</div>
+        <div class="hub-title">Poll Detail</div>
+        <div class="hub-settings">↗</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <!-- Big vote display -->
+      <div class="detail-card">
+        <div class="dc-players">
+          <div class="dc-player-col">
+            <img class="dc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" alt="Allen">
+            <div class="dc-name">J. Allen</div>
+            <div class="dc-sub">QB · BUF</div>
+          </div>
+          <div class="dc-vs"><div class="dc-vs-circle">vs</div></div>
+          <div class="dc-player-col">
+            <img class="dc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" alt="Mahomes">
+            <div class="dc-name">P. Mahomes</div>
+            <div class="dc-sub">QB · KC</div>
+          </div>
+        </div>
+
+        <div class="dc-vote-big">
+          <div class="dc-vote-col">
+            <div class="dc-pct">75%</div>
+            <div class="dc-vote-lbl">430 votes</div>
+            <div class="dc-winner-badge">Community pick ✓</div>
+          </div>
+          <div class="dc-vote-col">
+            <div class="dc-pct dim">25%</div>
+            <div class="dc-vote-lbl">144 votes</div>
+          </div>
+        </div>
+
+        <div class="dc-bar-row">
+          <div class="dc-bar"><div class="dc-bar-fill"></div></div>
+        </div>
+
+        <div class="dc-experts">
+          <div class="dc-exp-row">
+            <div class="dc-exp-left">
+              <div class="dc-exp-avatar">💎</div>
+              <div class="dc-exp-name"><strong>Diamond voters</strong></div>
+            </div>
+            <div class="dc-exp-pick">J. Allen <img class="dc-exp-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt=""></div>
+          </div>
+          <div class="dc-exp-row">
+            <div class="dc-exp-left">
+              <div class="dc-exp-avatar">JB</div>
+              <div class="dc-exp-name"><strong>Justin Boone</strong></div>
+            </div>
+            <div class="dc-exp-pick">P. Mahomes <img class="dc-exp-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt=""></div>
+          </div>
+          <div class="dc-exp-row">
+            <div class="dc-exp-left">
+              <div class="dc-exp-avatar">MH</div>
+              <div class="dc-exp-name"><strong>Matt Harmon</strong></div>
+            </div>
+            <div class="dc-exp-pick">J. Allen <img class="dc-exp-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt=""></div>
+          </div>
+        </div>
+
+        <div class="dc-actions">
+          <div class="dc-btn-primary" onclick="showToast('Allen set as starter!')">⚡ Start J. Allen</div>
+          <div class="dc-btn-secondary">Research Assistant</div>
+        </div>
+      </div>
+
+      <div class="dc-annotation" style="margin:0 16px 12px;border-radius:10px;border:1px dashed #D4C000;">
+        ✱ Detail view: same data as the list card but expanded. Future: vote-over-time chart, demographic breakdown (gender, league size, experience level).
+      </div>
+
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+  function nav(toId, fromId) {
+    document.getElementById(fromId).classList.remove('active');
+    document.getElementById(fromId).classList.add('behind');
+    document.getElementById(toId).classList.add('active');
+  }
+  function back(toId, fromId) {
+    document.getElementById(fromId).classList.remove('active');
+    document.getElementById(toId).classList.remove('behind');
+    document.getElementById(toId).classList.add('active');
+  }
+  function switchTab(tab) {
+    const isQ = tab === 'q';
+    document.getElementById('tab-q').classList.toggle('on', isQ);
+    document.getElementById('tab-v').classList.toggle('on', !isQ);
+    document.getElementById('content-q').style.display = isQ ? 'block' : 'none';
+    document.getElementById('content-v').style.display = isQ ? 'none' : 'block';
+  }
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>

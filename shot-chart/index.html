@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shot Chart — Last Play Direction</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      background: #f2f2f7;
+      color: #1a1a1a;
+    }
+
+    /* ── Demo bar ── */
+    .demo-bar {
+      background: #222;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .demo-bar-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-right: 4px;
+    }
+    .demo-btn {
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      background: transparent;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .demo-btn:hover { border-color: rgba(255,255,255,0.6); color: white; }
+    .demo-btn.active { background: white; color: #222; border-color: white; }
+
+    /* ── Page ── */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    /* ── Score header ── */
+    .score-header {
+      background: white;
+      border-radius: 14px;
+      padding: 14px 16px 0;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .score-team {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .score-team.right { flex-direction: row-reverse; text-align: right; }
+    .team-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 900;
+      color: white; flex-shrink: 0;
+    }
+    .score-team-info { }
+    .score-team-abbr { font-size: 14px; font-weight: 800; color: #1a1a1a; }
+    .score-team-record { font-size: 11px; color: #aaa; margin-top: 1px; }
+    .score-center { text-align: center; flex-shrink: 0; padding: 0 12px; }
+    .score-numbers {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      justify-content: center;
+    }
+    .score-num {
+      font-size: 32px;
+      font-weight: 900;
+      color: #1a1a1a;
+      line-height: 1;
+    }
+    .score-num.dim { color: #bbb; }
+    .score-sep { font-size: 20px; color: #ddd; font-weight: 300; }
+    .score-game-info {
+      font-size: 12px;
+      color: #888;
+      font-weight: 600;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .poss-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--poss-color, #1D42BE);
+      display: inline-block;
+    }
+    .score-meta {
+      font-size: 11px;
+      color: #bbb;
+      padding: 8px 0;
+      text-align: center;
+      border-top: 1px solid #f0f0f0;
+    }
+    .score-tabs {
+      display: flex;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 0;
+    }
+    .score-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #aaa;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .score-tab.active { color: #5B0DCC; border-bottom-color: #5B0DCC; }
+
+    /* ── Game content layout ── */
+    .game-content {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .court-col { flex: 1.1; min-width: 0; }
+    .plays-col { flex: 1; min-width: 0; }
+
+    @media (max-width: 600px) {
+      .game-content { flex-direction: column; }
+      .court-col, .plays-col { width: 100%; }
+    }
+
+    /* ── Court ── */
+    .court-wrap {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin-bottom: 8px;
+    }
+    .court-svg { width: 100%; display: block; }
+
+    /* Pulse animation for new shot dot */
+    @keyframes dotPop {
+      0%   { r: 3; opacity: 0; }
+      60%  { r: 9; opacity: 1; }
+      100% { r: 6.5; opacity: 1; }
+    }
+    .shot-dot-new { animation: dotPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+    /* ── Plays column ── */
+    .plays-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .plays-title {
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #1a1a1a;
+    }
+    .view-all { font-size: 13px; color: #5B0DCC; font-weight: 600; text-decoration: none; }
+
+    .plays-list {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    /* ── Featured (last play) item ── */
+    .play-featured {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      border-left: 4px solid var(--fc, #1D42BE);
+      border-bottom: 1px solid #f0f0f0;
+      background: white;
+    }
+    .play-featured.slide-in {
+      animation: slideIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .feat-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--fc, #1D42BE);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900;
+      color: white; flex-shrink: 0;
+    }
+    .feat-body { flex: 1; min-width: 0; }
+    .feat-eyebrow {
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--fc, #1D42BE);
+      margin-bottom: 2px;
+    }
+    .feat-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .feat-desc {
+      font-size: 12px;
+      color: #555;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .feat-time { font-size: 11px; color: #bbb; margin-top: 3px; }
+    .feat-score { text-align: right; flex-shrink: 0; }
+    .feat-score-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--fc, #1D42BE);
+      line-height: 1;
+    }
+    .feat-score-label { font-size: 10px; color: #bbb; margin-top: 2px; }
+
+    /* Non-shot featured (timeout, rebound w/o position) */
+    .play-featured-overlay {
+      position: relative;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #f0f0f0;
+      overflow: hidden;
+      background: var(--fc, #1D42BE);
+    }
+    .play-featured-overlay.slide-in { animation: slideIn 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+    .overlay-court-bg {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0.12;
+    }
+    .overlay-text {
+      font-size: 17px; font-weight: 900;
+      color: white; text-transform: uppercase;
+      letter-spacing: 0.04em; z-index: 1;
+    }
+    .overlay-sub {
+      font-size: 11px; color: rgba(255,255,255,0.6);
+      margin-top: 3px; z-index: 1;
+    }
+    .overlay-inner { text-align: center; z-index: 1; }
+
+    /* ── Regular play item ── */
+    .play-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 9px 14px;
+      gap: 8px;
+      border-bottom: 1px solid #f4f4f4;
+    }
+    .play-item:last-child { border-bottom: none; }
+    .play-item-bar {
+      width: 3px;
+      align-self: stretch;
+      border-radius: 2px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      background: var(--ic, #ddd);
+    }
+    .play-item-logo {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 2px;
+      background: var(--ic, #ddd);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7px; font-weight: 900; color: white;
+    }
+    .play-item-body { flex: 1; }
+    .play-item-time { font-size: 11px; font-weight: 700; color: #bbb; }
+    .play-item-desc { font-size: 13px; color: #444; margin-top: 1px; line-height: 1.35; }
+    .play-item-score { font-size: 12px; font-weight: 700; color: #bbb; flex-shrink: 0; padding-top: 1px; }
+  </style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="demo-bar-label">Simulate next play →</span>
+  <button class="demo-btn" onclick="addPlay('made2')">Made 2-Ptr</button>
+  <button class="demo-btn" onclick="addPlay('made3')">Made 3-Ptr</button>
+  <button class="demo-btn" onclick="addPlay('missed')">Missed Shot</button>
+  <button class="demo-btn" onclick="addPlay('ft')">Free Throw</button>
+  <button class="demo-btn" onclick="addPlay('timeout')">Timeout</button>
+  <button class="demo-btn" onclick="addPlay('rebound')">Rebound</button>
+</div>
+
+<div class="page">
+
+  <!-- Score header -->
+  <div class="score-header">
+    <div class="score-row">
+      <div class="score-team">
+        <div class="team-dot" style="background:#1D42BE">GSW</div>
+        <div class="score-team-info">
+          <div class="score-team-abbr">Warriors</div>
+          <div class="score-team-record">12-2</div>
+        </div>
+      </div>
+      <div class="score-center">
+        <div class="score-numbers">
+          <span class="score-num dim" id="gsw-score">8</span>
+          <span class="score-sep">–</span>
+          <span class="score-num" id="lal-score">11</span>
+        </div>
+        <div class="score-game-info">
+          <span id="game-clock">1ST · 10:55</span>
+          <span class="poss-dot" id="poss-dot" style="--poss-color:#552583"></span>
+          POSS
+        </div>
+      </div>
+      <div class="score-team right">
+        <div class="team-dot" style="background:#552583">LAL</div>
+        <div class="score-team-info">
+          <div class="score-team-abbr">Lakers</div>
+          <div class="score-team-record">12-2</div>
+        </div>
+      </div>
+    </div>
+    <div class="score-meta">ESPN · CBS &nbsp;·&nbsp; GSW -6.5, O/U 10.5</div>
+    <div class="score-tabs">
+      <div class="score-tab active">Game</div>
+      <div class="score-tab">Play by Play</div>
+      <div class="score-tab">Team Comparison</div>
+      <div class="score-tab">Odds</div>
+    </div>
+  </div>
+
+  <!-- Court + Plays -->
+  <div class="game-content">
+
+    <!-- Court -->
+    <div class="court-col">
+      <div class="court-wrap">
+        <svg id="court" class="court-svg" viewBox="0 0 580 308" xmlns="http://www.w3.org/2000/svg">
+
+          <!-- Floor -->
+          <rect width="580" height="308" fill="#e8d4a0"/>
+
+          <!-- Court outline -->
+          <rect x="3" y="3" width="574" height="302" fill="none" stroke="#c8a050" stroke-width="2"/>
+
+          <!-- Center line -->
+          <line x1="290" y1="3" x2="290" y2="305" stroke="#c8a050" stroke-width="1.5"/>
+          <!-- Center circle -->
+          <circle cx="290" cy="154" r="36" fill="none" stroke="#c8a050" stroke-width="1.5"/>
+
+          <!-- ═══ LEFT SIDE (Lakers attack left basket) ═══ -->
+          <!-- Backboard -->
+          <line x1="3" y1="140" x2="3" y2="168" stroke="#c8a050" stroke-width="3"/>
+          <!-- Rim -->
+          <circle cx="28" cy="154" r="7" fill="none" stroke="#c8a050" stroke-width="2"/>
+          <!-- Restricted area -->
+          <path d="M 28 146 A 8 8 0 0 1 28 162" fill="none" stroke="#c8a050" stroke-width="1.5"/>
+          <!-- Key / paint -->
+          <rect x="3" y="105" width="116" height="98" fill="rgba(0,0,0,0.045)" stroke="#c8a050" stroke-width="1.5"/>
+          <!-- Free throw circle (solid top half, dashed bottom) -->
+          <path d="M 119 118 A 35 35 0 0 1 119 190" fill="none" stroke="#c8a050" stroke-width="1.5"/>
+          <path d="M 119 118 A 35 35 0 0 0 119 190" fill="none" stroke="#c8a050" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <!-- Three-point corners -->
+          <line x1="3" y1="22" x2="93" y2="22" stroke="#c8a050" stroke-width="1.5"/>
+          <line x1="3" y1="286" x2="93" y2="286" stroke="#c8a050" stroke-width="1.5"/>
+          <!-- Three-point arc -->
+          <path d="M 93 22 A 144 144 0 0 1 93 286" fill="none" stroke="#c8a050" stroke-width="1.5"/>
+
+          <!-- ═══ RIGHT SIDE (Warriors attack right basket) ═══ -->
+          <!-- Backboard -->
+          <line x1="577" y1="140" x2="577" y2="168" stroke="#c8a050" stroke-width="3"/>
+          <!-- Rim -->
+          <circle cx="552" cy="154" r="7" fill="none" stroke="#c8a050" stroke-width="2"/>
+          <!-- Restricted area -->
+          <path d="M 552 146 A 8 8 0 0 0 552 162" fill="none" stroke="#c8a050" stroke-width="1.5"/>
+          <!-- Key / paint -->
+          <rect x="461" y="105" width="116" height="98" fill="rgba(0,0,0,0.045)" stroke="#c8a050" stroke-width="1.5"/>
+          <!-- Free throw circle -->
+          <path d="M 461 118 A 35 35 0 0 0 461 190" fill="none" stroke="#c8a050" stroke-width="1.5"/>
+          <path d="M 461 118 A 35 35 0 0 1 461 190" fill="none" stroke="#c8a050" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <!-- Three-point corners -->
+          <line x1="577" y1="22" x2="487" y2="22" stroke="#c8a050" stroke-width="1.5"/>
+          <line x1="577" y1="286" x2="487" y2="286" stroke="#c8a050" stroke-width="1.5"/>
+          <!-- Three-point arc -->
+          <path d="M 487 22 A 144 144 0 0 0 487 286" fill="none" stroke="#c8a050" stroke-width="1.5"/>
+
+          <!-- Team logo watermarks -->
+          <text x="175" y="163" text-anchor="middle" font-size="32" font-weight="900"
+                fill="#552583" opacity="0.12" font-family="-apple-system,sans-serif">LAL</text>
+          <text x="405" y="163" text-anchor="middle" font-size="32" font-weight="900"
+                fill="#1D42BE" opacity="0.12" font-family="-apple-system,sans-serif">GSW</text>
+
+          <!-- Pre-existing shot history -->
+          <!-- LAL made shots (left half) -->
+          <circle cx="80" cy="100" r="6" fill="#552583" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <circle cx="110" cy="190" r="6" fill="#552583" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <circle cx="180" cy="130" r="6" fill="#552583" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <circle cx="220" cy="220" r="6" fill="#552583" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <circle cx="60" cy="155" r="6" fill="#552583" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <!-- LAL missed shots (left half, hollow) -->
+          <circle cx="145" cy="80" r="6" fill="none" stroke="#552583" stroke-width="2" opacity="0.7"/>
+          <circle cx="255" cy="170" r="6" fill="none" stroke="#552583" stroke-width="2" opacity="0.7"/>
+
+          <!-- GSW made shots (right half) -->
+          <circle cx="500" cy="110" r="6" fill="#1D42BE" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <circle cx="470" cy="200" r="6" fill="#1D42BE" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <circle cx="400" cy="140" r="6" fill="#1D42BE" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <circle cx="350" cy="90" r="6" fill="#1D42BE" stroke="white" stroke-width="1.5" opacity="0.85"/>
+          <!-- GSW missed shots (right half, hollow) -->
+          <circle cx="430" cy="80" r="6" fill="none" stroke="#1D42BE" stroke-width="2" opacity="0.7"/>
+          <circle cx="520" cy="230" r="6" fill="none" stroke="#1D42BE" stroke-width="2" opacity="0.7"/>
+
+          <!-- Shot dots layer (new plays added here) -->
+          <g id="new-shots"></g>
+
+        </svg>
+      </div>
+    </div>
+
+    <!-- Plays -->
+    <div class="plays-col">
+      <div class="plays-header">
+        <span class="plays-title">Recent Plays</span>
+        <a href="#" class="view-all">View All ›</a>
+      </div>
+      <div class="plays-list" id="plays-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────
+  const GSW = { abbr: 'GSW', color: '#1D42BE', name: 'Warriors' };
+  const LAL = { abbr: 'LAL', color: '#552583', name: 'Lakers' };
+
+  let state = {
+    gswScore: 8,
+    lalScore: 11,
+    clock: '10:55',
+    quarter: '1ST',
+    possession: LAL,
+  };
+
+  // Play pool — cycles through these on each demo button press
+  const PLAY_POOLS = {
+    made2: [
+      { team: LAL, player: 'LeBron James', initials: 'LJ', desc: 'Running dunk assisted by Luka Doncic', shot: { x: 65, y: 154 }, score: +2, poss: GSW },
+      { team: GSW, player: 'Stephen Curry', initials: 'SC', desc: 'Driving layup', shot: { x: 515, y: 140 }, score: +2, poss: LAL },
+      { team: LAL, player: 'Anthony Davis', initials: 'AD', desc: 'Hook shot in the paint', shot: { x: 90, y: 175 }, score: +2, poss: GSW },
+    ],
+    made3: [
+      { team: LAL, player: 'Luka Doncic', initials: 'LD', desc: '23-foot three-pointer from the left corner', shot: { x: 255, y: 22 }, score: +3, poss: GSW },
+      { team: GSW, player: 'Klay Thompson', initials: 'KT', desc: 'Three-pointer from above the break', shot: { x: 350, y: 60 }, score: +3, poss: LAL },
+      { team: GSW, player: 'Stephen Curry', initials: 'SC', desc: 'Pull-up three from the logo', shot: { x: 310, y: 154 }, score: +3, poss: LAL },
+    ],
+    missed: [
+      { team: GSW, player: 'Draymond Green', initials: 'DG', desc: 'Missed mid-range jumper', shot: { x: 445, y: 115 }, makes: false, poss: LAL },
+      { team: LAL, player: 'LeBron James', initials: 'LJ', desc: 'Missed floater in the lane', shot: { x: 100, y: 154 }, makes: false, poss: GSW },
+    ],
+    ft: [
+      { team: LAL, player: 'LeBron James', initials: 'LJ', desc: 'Makes 1st free throw (2 PF)', shot: null, score: +1, poss: LAL, isFT: true },
+      { team: GSW, player: 'Stephen Curry', initials: 'SC', desc: 'Makes free throw', shot: null, score: +1, poss: GSW, isFT: true },
+    ],
+    timeout: [
+      { type: 'timeout', team: LAL, desc: '30 Second Timeout', sub: 'Lakers · 1ST · 10:20' },
+      { type: 'timeout', team: GSW, desc: 'Full Timeout', sub: 'Warriors · 1ST · 9:48' },
+    ],
+    rebound: [
+      { team: LAL, player: 'Anthony Davis', initials: 'AD', desc: 'Defensive rebound', shot: null, poss: LAL, isRebound: true },
+      { team: GSW, player: 'Draymond Green', initials: 'DG', desc: 'Defensive rebound', shot: null, poss: GSW, isRebound: true },
+    ],
+  };
+
+  const playCounters = { made2: 0, made3: 0, missed: 0, ft: 0, timeout: 0, rebound: 0 };
+
+  // Play log (displayed as recent plays below featured)
+  let playLog = [
+    { team: LAL, color: LAL.color, time: '10:55', desc: 'LeBron James running dunk assisted by Luka Doncic', score: '8-11' },
+    { team: LAL, color: LAL.color, time: '10:30', desc: 'Luka Doncic 23-foot three-pointer from the left corner', score: '8-9' },
+    { team: LAL, color: LAL.color, time: '10:30', desc: 'Luka Doncic defensive rebound', score: '' },
+    { team: GSW, color: GSW.color, time: '10:45', desc: 'Stephen Curry missed 3-pointer', score: '' },
+  ];
+
+  // ── Render ─────────────────────────────────────────────────────
+  function renderPlays(featured) {
+    const list = document.getElementById('plays-list');
+
+    // Featured item HTML
+    let featuredHTML = '';
+    if (featured.type === 'timeout') {
+      featuredHTML = `
+        <div class="play-featured-overlay slide-in" style="--fc:${featured.team.color}">
+          <div class="overlay-court-bg">
+            <svg viewBox="0 0 580 308" width="100%" xmlns="http://www.w3.org/2000/svg" style="opacity:1">
+              <rect x="3" y="3" width="574" height="302" fill="none" stroke="white" stroke-width="3"/>
+              <line x1="290" y1="3" x2="290" y2="305" stroke="white" stroke-width="2"/>
+              <circle cx="290" cy="154" r="36" fill="none" stroke="white" stroke-width="2"/>
+              <rect x="3" y="105" width="116" height="98" fill="none" stroke="white" stroke-width="2"/>
+              <rect x="461" y="105" width="116" height="98" fill="none" stroke="white" stroke-width="2"/>
+              <path d="M 93 22 A 144 144 0 0 1 93 286" fill="none" stroke="white" stroke-width="2"/>
+              <path d="M 487 22 A 144 144 0 0 0 487 286" fill="none" stroke="white" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="overlay-inner">
+            <div class="overlay-text">${featured.desc}</div>
+            <div class="overlay-sub">${featured.sub}</div>
+          </div>
+        </div>`;
+    } else {
+      const scoreLabel = featured.team === LAL
+        ? `${state.gswScore}–${state.lalScore}`
+        : `${state.gswScore}–${state.lalScore}`;
+      const eyebrow = featured.isRebound ? 'Rebound' : featured.isFT ? 'Free Throw' : 'Last Play';
+      featuredHTML = `
+        <div class="play-featured slide-in" style="--fc:${featured.team.color}">
+          <div class="feat-avatar">${featured.initials}</div>
+          <div class="feat-body">
+            <div class="feat-eyebrow">${eyebrow}</div>
+            <div class="feat-name">${featured.player}</div>
+            <div class="feat-desc">${featured.desc}</div>
+            <div class="feat-time">${state.quarter} · ${state.clock}</div>
+          </div>
+          <div class="feat-score">
+            <div class="feat-score-val">${state.gswScore}–${state.lalScore}</div>
+            <div class="feat-score-label">GSW – LAL</div>
+          </div>
+        </div>`;
+    }
+
+    // Regular play items
+    const regularHTML = playLog.map(p => `
+      <div class="play-item">
+        <div class="play-item-bar" style="--ic:${p.color}"></div>
+        <div class="play-item-logo" style="--ic:${p.color}">${p.team.abbr.slice(0,1)}</div>
+        <div class="play-item-body">
+          <div class="play-item-time">${p.time}</div>
+          <div class="play-item-desc">${p.desc}</div>
+        </div>
+        ${p.score ? `<div class="play-item-score">${p.score}</div>` : ''}
+      </div>`).join('');
+
+    list.innerHTML = featuredHTML + regularHTML;
+  }
+
+  function addShotDot(shot, makes, color) {
+    if (!shot) return;
+    const g = document.getElementById('new-shots');
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', shot.x);
+    circle.setAttribute('cy', shot.y);
+    circle.setAttribute('r', '6.5');
+    circle.setAttribute('fill', makes !== false ? color : 'none');
+    circle.setAttribute('stroke', color);
+    circle.setAttribute('stroke-width', makes !== false ? '1.5' : '2.2');
+    circle.setAttribute('opacity', '0.9');
+    circle.classList.add('shot-dot-new');
+    // Remove animation class after it runs
+    circle.addEventListener('animationend', () => circle.classList.remove('shot-dot-new'));
+    g.appendChild(circle);
+  }
+
+  function updateScoreHeader() {
+    document.getElementById('gsw-score').textContent = state.gswScore;
+    document.getElementById('lal-score').textContent = state.lalScore;
+    document.getElementById('gsw-score').className = 'score-num' + (state.gswScore < state.lalScore ? ' dim' : '');
+    document.getElementById('lal-score').className = 'score-num' + (state.lalScore < state.gswScore ? ' dim' : '');
+    document.getElementById('poss-dot').style.setProperty('--poss-color', state.possession.color);
+    document.getElementById('game-clock').textContent = `${state.quarter} · ${state.clock}`;
+  }
+
+  function addPlay(type) {
+    const pool = PLAY_POOLS[type];
+    const play = pool[playCounters[type] % pool.length];
+    playCounters[type]++;
+
+    // Update state
+    if (play.score) {
+      if (play.team === GSW) state.gswScore += play.score;
+      else state.lalScore += play.score;
+    }
+    if (play.poss) state.possession = play.poss;
+
+    // Advance clock a bit
+    const [min, sec] = state.clock.split(':').map(Number);
+    const totalSec = Math.max(0, min * 60 + sec - Math.floor(Math.random() * 20 + 10));
+    state.clock = `${Math.floor(totalSec / 60)}:${String(totalSec % 60).padStart(2, '0')}`;
+
+    updateScoreHeader();
+
+    // Add shot dot
+    if (play.shot) addShotDot(play.shot, !play.makes && play.makes !== false ? true : play.makes, play.team.color);
+
+    // Prepend to play log
+    if (play.type !== 'timeout') {
+      const scoreStr = `${state.gswScore}-${state.lalScore}`;
+      playLog.unshift({ team: play.team, color: play.team.color, time: state.clock, desc: `${play.player} ${play.desc}`, score: play.score ? scoreStr : '' });
+      if (playLog.length > 5) playLog.pop();
+    }
+
+    renderPlays(play);
+  }
+
+  // ── Init ───────────────────────────────────────────────────────
+  renderPlays({
+    team: LAL,
+    player: 'LeBron James',
+    initials: 'LJ',
+    desc: 'Running dunk assisted by Luka Doncic',
+    shot: { x: 65, y: 154 },
+  });
+</script>
+
+</body>
+</html>
