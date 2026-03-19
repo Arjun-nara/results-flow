@@ -351,8 +351,9 @@
 
     <div class="ra-bottom-bar">
       <div class="ra-player-chips">
-        <!-- P1 chip — shows active player 1 -->
-        <div class="ra-chip" id="chip-p1">
+        <!-- P1 chip -->
+        <div id="chip-p1-empty" class="ra-chip-empty"><span>Select Player</span></div>
+        <div class="ra-chip" id="chip-p1" style="display:none;">
           <div class="ra-chip-hs"><img id="chip-p1-img" src="" onerror="this.style.display='none'"></div>
           <span class="ra-chip-name" id="chip-p1-name">—</span>
           <span class="ra-chip-x" onclick="clearP1()">✕</span>
@@ -558,7 +559,7 @@
     }, 180);
   }
   function goToRA() {
-    p1 = PLAYERS[0];
+    p1 = null;
     p2 = null;
     updateP1Chip();
     buildPickerRows();
@@ -567,19 +568,32 @@
 
   /* ── P1 chip ── */
   function updateP1Chip() {
-    document.getElementById('chip-p1-img').src = p1 ? ESPN + p1.espn + '.png' : '';
-    document.getElementById('chip-p1-name').textContent = p1 ? p1.name : '—';
+    if (p1) {
+      document.getElementById('chip-p1').style.display = 'flex';
+      document.getElementById('chip-p1-empty').style.display = 'none';
+      document.getElementById('chip-p1-img').src = ESPN + p1.espn + '.png';
+      document.getElementById('chip-p1-name').textContent = p1.name;
+    } else {
+      document.getElementById('chip-p1').style.display = 'none';
+      document.getElementById('chip-p1-empty').style.display = 'flex';
+    }
   }
 
-  /* ── Select P2 ── */
+  /* ── Select player — fills P1 first, then P2 ── */
   function selectP2(player) {
+    if (!p1) {
+      // fill P1
+      p1 = player;
+      updateP1Chip();
+      buildPickerRows(); // rebuild to remove p1 from list
+      return;
+    }
+    // fill P2
     p2 = player;
-    // update radios
     document.querySelectorAll('.ra-p-radio').forEach(r => r.classList.remove('selected'));
     document.querySelectorAll('.ra-player-row').forEach(r => r.classList.remove('selected-row'));
     const radio = document.getElementById('radio-' + player.id);
     if (radio) { radio.classList.add('selected'); radio.closest('.ra-player-row').classList.add('selected-row'); }
-    // show chip
     document.getElementById('chip-p2-empty').style.display = 'none';
     const chipP2 = document.getElementById('chip-p2');
     chipP2.style.display = 'flex';
@@ -592,11 +606,9 @@
   function clearP1() {
     p1 = null;
     p2 = null;
-    document.getElementById('chip-p1-img').src = '';
-    document.getElementById('chip-p1-name').textContent = '—';
+    updateP1Chip();
     clearP2();
     buildPickerRows();
-    back('s0', 's1');
   }
 
   /* ── Clear P2 ── */
