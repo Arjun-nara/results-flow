@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Results Flow — v11</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
+    body { background:#1a0a3d; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px 20px; }
+
+    .phone {
+      width:390px; height:844px; border-radius:48px; overflow:hidden;
+      position:relative; flex-shrink:0;
+      box-shadow: 0 0 0 2px #3a1a7a, 0 0 0 12px #0e0520, 0 40px 100px rgba(0,0,0,0.8);
+      background:#F4F2F8;
+    }
+    .screen { position:absolute; inset:0; overflow:hidden; display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.32s cubic-bezier(0.4,0,0.2,1); }
+    .screen.active  { transform:translateX(0); }
+    .screen.behind  { transform:translateX(-22%); }
+    .scroll { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+    .scroll::-webkit-scrollbar { display:none; }
+
+    .sb { display:flex; justify-content:space-between; align-items:center; padding:14px 24px 6px; flex-shrink:0; }
+    .sb-time  { font-size:15px; font-weight:700; color:#111; }
+    .sb-icons { font-size:11px; font-weight:600; color:#666; }
+
+    /* ═══════════════════════════
+       S0 — TEAM PAGE
+    ═══════════════════════════ */
+    #s0 { background:#fff; transform:translateX(0); }
+    .team-hdr { background:#fff; border-bottom:1px solid #ECEAF2; flex-shrink:0; }
+    .team-nav  { display:flex; align-items:center; justify-content:space-between; padding:2px 16px 10px; }
+    .team-tabs { display:flex; }
+    .team-tab  { flex:1; text-align:center; padding:9px 0; font-size:13px; font-weight:700; color:#aaa; border-bottom:2.5px solid transparent; }
+    .team-tab.on { color:#5B0DCC; border-bottom-color:#5B0DCC; }
+    .pills-row { display:flex; gap:8px; padding:12px 16px 6px; overflow-x:auto; scrollbar-width:none; }
+    .pills-row::-webkit-scrollbar { display:none; }
+    .pill { display:flex; align-items:center; gap:5px; border:1.5px solid #DDDAE8; border-radius:20px; padding:7px 12px; font-size:12px; font-weight:700; color:#666; white-space:nowrap; cursor:pointer; flex-shrink:0; }
+    .pill.active { border-color:#5B0DCC; color:#5B0DCC; background:#F2ECFE; }
+    .pill-badge { background:#5B0DCC; color:#fff; font-size:9px; font-weight:800; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+    .roster-section { padding:10px 16px 4px; font-size:10px; font-weight:800; color:#aaa; text-transform:uppercase; letter-spacing:.7px; }
+    .roster-row { display:flex; align-items:center; gap:11px; padding:10px 16px; border-bottom:1px solid #F4F2F8; }
+    .rr-pos  { width:28px; height:28px; border-radius:6px; background:#EDE9F8; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#5B0DCC; flex-shrink:0; }
+    .rr-logo { width:28px; height:28px; object-fit:contain; flex-shrink:0; }
+    .rr-info { flex:1; }
+    .rr-name { font-size:13px; font-weight:800; color:#111; }
+    .rr-game { font-size:10px; color:#999; margin-top:1px; }
+    .rr-proj { font-size:14px; font-weight:800; color:#111; }
+    .bnav { background:#fff; border-top:1px solid #ECEAF2; display:flex; padding:8px 0 28px; flex-shrink:0; }
+    .bn    { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; }
+    .bn-icon { font-size:19px; }
+    .bn-lbl  { font-size:9px; font-weight:700; color:#bbb; }
+    .bn.on .bn-lbl { color:#5B0DCC; }
+
+    /* ═══════════════════════════
+       S1 — RESULTS HUB
+    ═══════════════════════════ */
+    #s1 { background:#F4F2F8; }
+    .hub-hdr { background:#fff; border-bottom:1px solid #ECEAF2; flex-shrink:0; }
+    .hub-nav  { display:flex; align-items:center; justify-content:space-between; padding:2px 16px 10px; }
+    .hub-back { display:flex; align-items:center; gap:2px; color:#5B0DCC; font-size:13px; font-weight:700; cursor:pointer; }
+    .hub-back-arrow { font-size:24px; line-height:1; margin-top:-2px; }
+    .hub-title { font-size:17px; font-weight:800; color:#111; }
+    .hub-settings { width:32px; height:32px; background:#F4F2F8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; color:#888; cursor:pointer; }
+
+    /* Underline tabs — matching Pick'Em "Picks / Groups / Leaders / Schedule" */
+    .hub-tabs { display:flex; border-bottom:1px solid #ECEAF2; }
+    .hub-tab  { flex:1; text-align:center; padding:10px 0; font-size:13px; font-weight:700; color:#aaa; border-bottom:2.5px solid transparent; cursor:pointer; transition:all .15s; }
+    .hub-tab.on { color:#5B0DCC; border-bottom-color:#5B0DCC; }
+
+    /* ═══════════════════════════
+       PICK ACCURACY CARD (My Votes, sticky + collapse)
+    ═══════════════════════════ */
+    .acc-card {
+      margin:0 16px 12px; background:#fff; border-radius:16px; overflow:hidden;
+      box-shadow:0 2px 12px rgba(91,13,204,0.07);
+      position:sticky; top:0; z-index:20;
+      transition: border-radius .25s ease, margin .25s ease, box-shadow .25s ease;
+    }
+    .acc-card .acc-body,
+    .acc-card .acc-stats,
+    .acc-card .acc-diamond-row { transition: all .25s ease; overflow:hidden; }
+    .acc-card.collapsed { border-radius:0; margin:0; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+    .acc-card.collapsed .acc-body { padding:10px 16px 8px; }
+    .acc-card.collapsed .acc-eyebrow-row .acc-correct { display:none; }
+    .acc-card.collapsed .acc-tier-sub { display:none; }
+    .acc-card.collapsed .acc-pct-big  { font-size:22px; }
+    .acc-card.collapsed .acc-stats    { max-height:0; padding:0; border-top:none; }
+    .acc-card.collapsed .acc-diamond-row { max-height:0; padding:0; border-top:none; }
+    .acc-body { padding:14px 16px 10px; }
+    .acc-eyebrow-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .acc-eyebrow { font-size:11px; font-weight:700; color:#999; }
+    .acc-correct { font-size:11px; font-weight:800; color:#5B0DCC; }
+    .acc-main-row { display:flex; align-items:flex-start; justify-content:space-between; }
+    .acc-tier-badge { display:inline-flex; align-items:center; gap:5px; background:linear-gradient(135deg,#FFF8E1,#FFF3CD); border:1.5px solid #FFD54F; border-radius:10px; padding:6px 10px; }
+    .acc-tier-icon { font-size:16px; }
+    .acc-tier-name { font-size:13px; font-weight:800; color:#7A5C00; }
+    .acc-tier-sub  { font-size:11px; color:#A89060; font-weight:500; margin-top:4px; }
+    .acc-pct-block { text-align:right; }
+    .acc-pct-big   { font-size:42px; font-weight:800; color:#111; line-height:1; letter-spacing:-1px; }
+    .acc-pct-lbl   { font-size:11px; color:#999; margin-top:2px; font-weight:600; }
+    .acc-stats { display:flex; border-top:1px solid #F0EDF8; }
+    .acc-stat  { flex:1; display:flex; flex-direction:column; align-items:center; padding:10px 0 8px; border-right:1px solid #F0EDF8; }
+    .acc-stat:last-child { border-right:none; }
+    .acc-stat-val { font-size:14px; font-weight:800; color:#111; }
+    .acc-stat-lbl { font-size:10px; color:#aaa; font-weight:600; margin-top:1px; }
+    .acc-diamond-row { padding:12px 16px 14px; background:linear-gradient(135deg,#FAFAFE,#F5F0FF); border-top:1px solid #EDE9F5; }
+    .adp-header  { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .adp-label   { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:700; color:#555; }
+    .adp-pct     { font-size:13px; font-weight:800; color:#5B0DCC; }
+    .adp-track   { height:8px; background:#E8E3F5; border-radius:99px; overflow:hidden; margin-bottom:6px; }
+    .adp-fill    { height:100%; border-radius:99px; background:linear-gradient(90deg,#A78BFA,#5B0DCC); width:0%; transition:width 1.1s cubic-bezier(0.4,0,0.2,1); }
+    .adp-sub     { font-size:10px; color:#A89CC8; font-weight:600; }
+
+    /* ═══════════════════════════
+       YOUR POLLS SUMMARY CARD  (mirrors acc-card style)
+    ═══════════════════════════ */
+    .polls-card { background:#fff; border-radius:16px; margin:14px 16px 0; overflow:hidden; box-shadow:0 2px 12px rgba(91,13,204,0.07); }
+    .polls-body { padding:14px 16px 10px; }
+    .polls-eyebrow-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .polls-eyebrow { font-size:11px; font-weight:700; color:#999; }
+    .polls-total  { font-size:11px; font-weight:800; color:#5B0DCC; }
+    .polls-main-row { display:flex; align-items:flex-start; justify-content:space-between; }
+    .polls-pct-block { text-align:right; }
+    .polls-pct-big { font-size:42px; font-weight:800; color:#111; line-height:1; letter-spacing:-1px; }
+    .polls-pct-lbl { font-size:11px; color:#999; margin-top:2px; font-weight:600; }
+    .polls-stats { display:flex; border-top:1px solid #F0EDF8; }
+    .polls-stat  { flex:1; display:flex; flex-direction:column; align-items:center; padding:10px 0 8px; border-right:1px solid #F0EDF8; }
+    .polls-stat:last-child { border-right:none; }
+    .polls-stat-val { font-size:14px; font-weight:800; color:#111; }
+    .polls-stat-lbl { font-size:10px; color:#aaa; font-weight:600; margin-top:1px; }
+
+    /* ═══════════════════════════
+       SECTION LABEL
+    ═══════════════════════════ */
+    .sec-lbl { display:flex; justify-content:space-between; align-items:center; padding:14px 16px 8px; }
+    .sec-lbl-txt { font-size:18px; font-weight:800; color:#111; }
+    .sec-lbl-sub { font-size:11px; color:#aaa; font-weight:600; }
+
+    /* ═══════════════════════════
+       CARD WRAPPER  (↔ Pick'Em "Group A" card)
+    ═══════════════════════════ */
+    .pcard { background:#fff; border-radius:14px; margin:0 16px 12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+
+    /* Card header  (↔ "Group A  ·  Up to 5 pts") */
+    .pc-head { display:flex; align-items:center; justify-content:space-between; padding:0; overflow:hidden; }
+    .pc-head-left  { padding:10px 14px; font-size:11px; font-weight:700; color:#888; }
+    .pc-head-badge { background:#5B0DCC; color:#fff; font-size:11px; font-weight:800; padding:10px 14px; }
+    /* Outcome variants */
+    .pc-head-badge.correct { background:#1A8A3A; }
+    .pc-head-badge.missed  { background:#888; }
+    .pc-head-badge.bold    { background:#C25A00; }
+    .pc-head-badge.votes   { background:#5B0DCC; }
+
+    /* Player cell  (↔ Pick'Em team row) */
+    .pc-row { display:flex; align-items:center; gap:10px; padding:10px 14px; position:relative; }
+    .pc-row + .pc-row { border-top:1px solid #F8F6FD; }
+    /* My Questions — no tint on rows (neutral) */
+    #content-q .pc-row.winner-row { background:#fff; }
+    /* My Votes — tint on your pick row to reinforce outcome */
+    #content-v .pc-row.winner-row { background:#F0FAF4; }
+    #content-v .pc-row.missed-row { background:#FFF5F5; }
+    #content-v .pc-row.bold-row   { background:#FFF8F0; }
+
+    /* Checkmark overlay  (↔ Pick'Em green ✓ circle) */
+    .pc-check {
+      width:18px; height:18px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:800;
+    }
+    .pc-check.correct { background:#1A8A3A; color:#fff; }
+    .pc-check.missed  { background:#E0E0E0; color:#aaa; }
+    .pc-check.bold    { background:#C25A00; color:#fff; }
+    .pc-check.neutral { background:#F0EDF8; color:#C4BAE0; }
+
+    .pc-hs   { width:40px; height:40px; border-radius:8px; object-fit:cover; object-position:top; border:1px solid #ECEAF2; flex-shrink:0; }
+    .pc-logo { width:18px; height:18px; object-fit:contain; flex-shrink:0; }
+
+    .pc-info { flex:1; min-width:0; }
+    .pc-name { font-size:13px; font-weight:700; color:#111; }
+    .pc-sub  { font-size:10px; color:#aaa; margin-top:1px; display:flex; align-items:center; gap:3px; }
+
+    .pc-pct-col { text-align:right; flex-shrink:0; }
+    .pc-pct { font-size:18px; font-weight:800; color:#CCC; }
+    .pc-pct.lead { color:#111; }
+    .pc-picked { font-size:10px; font-weight:700; color:#aaa; margin-top:1px; }
+    .pc-row.winner-row .pc-picked { color:#1A8A3A; }
+    .pc-row.missed-row .pc-picked { color:#D32F2F; }
+
+    /* Score footer  (↔ "Locks Date" row) */
+    .pc-footer { padding:7px 14px 9px; border-top:1px solid #F0EDF8; font-size:11px; color:#bbb; font-weight:600; background:#FAFAFE; }
+    .pc-footer .win-score { color:#333; font-weight:800; }
+
+    /* Analyst rows */
+    .pc-analysts { border-top:1px solid #F4F2F8; padding:8px 14px 6px; background:#FAFAFE; }
+    .pc-analyst-row { display:flex; align-items:center; justify-content:space-between; padding:4px 0; }
+    .pc-analyst-left  { font-size:11px; font-weight:600; color:#888; }
+    .pc-analyst-right { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:800; color:#111; }
+    .pc-analyst-logo  { width:16px; height:16px; object-fit:contain; }
+
+    /* CTA bar  (↔ "Autofill  /  Save Entry") */
+    .pc-cta { display:flex; gap:8px; padding:10px 14px 12px; border-top:1px solid #F4F2F8; }
+    .pc-btn-secondary { flex:1; background:#fff; color:#5B0DCC; border:1.5px solid #C9BEE8; font-size:13px; font-weight:700; padding:11px 0; border-radius:12px; cursor:pointer; font-family:inherit; text-align:center; }
+    .pc-btn-primary   { flex:1; background:#5B0DCC; color:#fff; font-size:13px; font-weight:800; padding:11px 0; border-radius:12px; cursor:pointer; border:none; font-family:inherit; text-align:center; }
+
+    /* Lock state */
+    .pc-lock { display:flex; align-items:flex-start; gap:8px; padding:10px 14px; border-top:1px solid #F4F2F8; background:#FAFAFA; }
+    .pc-lock-info-title { font-size:12px; font-weight:700; color:#333; }
+    .pc-lock-info-sub   { font-size:10px; color:#aaa; margin-top:1px; }
+    .pc-btn-ra-only { display:block; width:calc(100% - 28px); margin:0 14px 12px; background:#fff; color:#5B0DCC; border:1.5px solid #C9BEE8; font-size:13px; font-weight:700; padding:11px 0; border-radius:12px; cursor:pointer; font-family:inherit; text-align:center; }
+
+    /* Diamond progress */
+    .diamond-bar { background:#fff; margin:0 16px 12px; border-radius:14px; padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+    .db-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .db-label  { display:flex; align-items:center; gap:5px; font-size:13px; font-weight:700; color:#555; }
+    .db-pct    { font-size:13px; font-weight:800; color:#5B0DCC; }
+    .db-track  { height:8px; background:#E8E3F5; border-radius:99px; overflow:hidden; margin-bottom:6px; }
+    .db-fill   { height:100%; border-radius:99px; background:linear-gradient(90deg,#A78BFA,#5B0DCC); width:0%; transition:width 1.1s cubic-bezier(0.4,0,0.2,1); }
+    .db-sub    { font-size:10px; color:#A89CC8; font-weight:600; }
+
+    /* ═══════════════════════════
+       ANIMATIONS
+    ═══════════════════════════ */
+    @keyframes fadeSlideUp {
+      from { opacity:0; transform:translateY(12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .animated .pcard, .animated .diamond-bar {
+      animation: fadeSlideUp 0.32s cubic-bezier(0.4,0,0.2,1) both;
+    }
+    .animated .pcard:nth-child(1), .animated .diamond-bar { animation-delay:.03s; }
+    .animated .pcard:nth-child(2) { animation-delay:.07s; }
+    .animated .pcard:nth-child(3) { animation-delay:.11s; }
+    .animated .pcard:nth-child(4) { animation-delay:.15s; }
+    .animated .pcard:nth-child(5) { animation-delay:.19s; }
+    .animated .pcard:nth-child(6) { animation-delay:.23s; }
+    .animated .pcard:nth-child(7) { animation-delay:.27s; }
+    .animated .pcard:nth-child(8) { animation-delay:.31s; }
+    .animated .pcard:nth-child(9) { animation-delay:.35s; }
+    .animated .pcard:nth-child(10) { animation-delay:.39s; }
+    .animated .pcard:nth-child(11) { animation-delay:.43s; }
+    .animated .pcard:nth-child(12) { animation-delay:.47s; }
+
+    .toast { position:absolute; bottom:100px; left:50%; transform:translateX(-50%) translateY(14px); background:#1c1c1e; color:white; font-size:13px; font-weight:600; padding:11px 22px; border-radius:24px; white-space:nowrap; opacity:0; transition:opacity .25s,transform .25s; pointer-events:none; z-index:999; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- ══════════ S0 — TEAM PAGE ══════════ -->
+  <div id="s0" class="screen active">
+    <div class="team-hdr">
+      <div class="sb"><span class="sb-time">9:41</span><span class="sb-icons">●●● Wi-Fi 🔋</span></div>
+      <div class="team-nav">
+        <span style="font-size:22px;color:#999;">‹</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <img style="width:20px;height:20px;object-fit:contain;" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="">
+          <span style="font-size:15px;font-weight:700;color:#111;">Super Seniors League</span>
+          <span style="font-size:11px;color:#999;">∨</span>
+        </div>
+        <span style="font-size:20px;">💬</span>
+      </div>
+      <div class="team-tabs">
+        <div class="team-tab on">Team</div><div class="team-tab">Matchup</div>
+        <div class="team-tab">Players</div><div class="team-tab">League</div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="pills-row">
+        <div class="pill">⭐ Assistant GM</div>
+        <div class="pill">Player Updates <div class="pill-badge" style="background:#E65100;">2</div></div>
+        <div class="pill active" onclick="nav('s1','s0')">Poll Results <div class="pill-badge">3</div></div>
+      </div>
+      <div class="roster-section">Starters</div>
+      <div class="roster-row"><div class="rr-pos">QB</div><img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt=""><div class="rr-info"><div class="rr-name">J. ALLEN</div><div class="rr-game">BUF · Sun 1pm vs CLE</div></div><div class="rr-proj">24.6</div></div>
+      <div class="roster-row"><div class="rr-pos">RB</div><img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt=""><div class="rr-info"><div class="rr-name">S. BARKLEY</div><div class="rr-game">PHI · Sun 1pm vs DAL</div></div><div class="rr-proj">19.8</div></div>
+      <div class="roster-row"><div class="rr-pos">RB</div><img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt=""><div class="rr-info"><div class="rr-name">D. HENRY</div><div class="rr-game">TEN · Sun 1pm vs HOU</div></div><div class="rr-proj">14.2</div></div>
+      <div class="roster-row"><div class="rr-pos">WR</div><img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt=""><div class="rr-info"><div class="rr-name">C. LAMB</div><div class="rr-game">DAL · Sun 1pm vs PHI</div></div><div class="rr-proj">18.4</div></div>
+      <div class="roster-row"><div class="rr-pos">WR</div><img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/mia.png" alt=""><div class="rr-info"><div class="rr-name">T. HILL</div><div class="rr-game">MIA · Sun 1pm vs NE</div></div><div class="rr-proj">14.8</div></div>
+      <div class="roster-row"><div class="rr-pos">TE</div><img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt=""><div class="rr-info"><div class="rr-name">T. KELCE</div><div class="rr-game">KC · Sun 4:25pm vs DEN</div></div><div class="rr-proj">12.1</div></div>
+      <div class="roster-row" style="margin-bottom:16px"><div class="rr-pos">FLX</div><img class="rr-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/min.png" alt=""><div class="rr-info"><div class="rr-name">T. POLLARD</div><div class="rr-game">MIN · Sun 1pm vs GB</div></div><div class="rr-proj">8.4</div></div>
+    </div>
+    <div class="bnav">
+      <div class="bn on"><div class="bn-icon">🏠</div><div class="bn-lbl" style="color:#5B0DCC">Home</div></div>
+      <div class="bn"><div class="bn-icon">🎮</div><div class="bn-lbl">Games</div></div>
+      <div class="bn"><div class="bn-icon">📰</div><div class="bn-lbl">News</div></div>
+      <div class="bn"><div class="bn-icon">📊</div><div class="bn-lbl">Scores</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════ S1 — RESULTS HUB ══════════ -->
+  <div id="s1" class="screen">
+    <div class="hub-hdr">
+      <div class="sb"><span class="sb-time">9:41</span><span class="sb-icons">●●● Wi-Fi 🔋</span></div>
+      <div class="hub-nav">
+        <div class="hub-back" onclick="back('s0','s1')"><span class="hub-back-arrow">‹</span>Fantasy</div>
+        <div class="hub-title">Swipe to Start Results</div>
+        <div class="hub-settings">⚙</div>
+      </div>
+      <!-- Underline tabs matching Pick'Em nav -->
+      <div class="hub-tabs">
+        <div class="hub-tab on" id="tab-q" onclick="switchTab('q')">My Questions</div>
+        <div class="hub-tab" id="tab-v" onclick="switchTab('v')">My Votes</div>
+      </div>
+    </div>
+
+    <div class="scroll" id="hub-scroll">
+
+      <!-- ══ MY QUESTIONS TAB ══ -->
+      <div id="content-q" class="tab-content animated">
+
+        <!-- Your Polls summary card -->
+        <div class="polls-card">
+          <div class="polls-body">
+            <div class="polls-eyebrow-row">
+              <span class="polls-eyebrow">Week 9 · Your Polls</span>
+              <span class="polls-total">2,773 votes total</span>
+            </div>
+            <div class="polls-main-row">
+              <div class="acc-tier-badge">
+                <span class="acc-tier-icon">📊</span>
+                <span class="acc-tier-name" style="color:#5B0DCC;">2 Polls</span>
+              </div>
+              <div class="polls-pct-block">
+                <div class="polls-pct-big">75%</div>
+                <div class="polls-pct-lbl">avg consensus</div>
+              </div>
+            </div>
+          </div>
+          <div class="polls-stats">
+            <div class="polls-stat"><div class="polls-stat-val">2,773</div><div class="polls-stat-lbl">Total votes</div></div>
+            <div class="polls-stat"><div class="polls-stat-val">1,634</div><div class="polls-stat-lbl">Unique voters</div></div>
+            <div class="polls-stat"><div class="polls-stat-val">2d</div><div class="polls-stat-lbl">Ago</div></div>
+          </div>
+        </div>
+
+        <!-- Q1: Allen vs Mahomes -->
+        <div class="pcard" style="margin-top:14px;">
+          <div class="pc-head">
+            <span class="pc-head-left">QB · Week 9</span>
+            <span class="pc-head-badge votes">430 votes</span>
+          </div>
+
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" alt="">
+            <div class="pc-info">
+              <div class="pc-name">J. Allen</div>
+              <div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt=""> BUF · 17.4 proj · QB</div>
+            </div>
+            <div class="pc-pct-col"><div class="pc-pct lead">75%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" alt="">
+            <div class="pc-info">
+              <div class="pc-name">P. Mahomes</div>
+              <div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt=""> KC · 16.4 proj · QB</div>
+            </div>
+            <div class="pc-pct-col"><div class="pc-pct">25%</div><div class="pc-picked">Picked</div></div>
+          </div>
+
+          <div class="pc-analysts">
+            <div class="pc-analyst-row">
+              <span class="pc-analyst-left">💎 Diamond voters pick:</span>
+              <div class="pc-analyst-right">J. Allen <img class="pc-analyst-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt=""></div>
+            </div>
+            <div class="pc-analyst-row">
+              <span class="pc-analyst-left">🟣 Justin Boone pick:</span>
+              <div class="pc-analyst-right">P. Mahomes <img class="pc-analyst-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt=""></div>
+            </div>
+            <div class="pc-analyst-row">
+              <span class="pc-analyst-left">🟣 Matt Harmon pick:</span>
+              <div class="pc-analyst-right">J. Allen <img class="pc-analyst-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt=""></div>
+            </div>
+          </div>
+          <div class="pc-cta">
+            <button class="pc-btn-secondary">Research Assistant</button>
+            <button class="pc-btn-primary" onclick="showToast('Allen set as starter!')">Start J. Allen</button>
+          </div>
+        </div>
+
+        <!-- Q2: Barkley vs Henry — lock state -->
+        <div class="pcard" style="margin-bottom:24px;">
+          <div class="pc-head">
+            <span class="pc-head-left">FLEX · Week 9</span>
+            <span class="pc-head-badge votes">3,091 votes</span>
+          </div>
+
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3929630.png" alt="">
+            <div class="pc-info">
+              <div class="pc-name">S. Barkley</div>
+              <div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt=""> PHI · 17.4 proj · RB</div>
+            </div>
+            <div class="pc-pct-col"><div class="pc-pct lead">58%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3043078.png" alt="">
+            <div class="pc-info">
+              <div class="pc-name">D. Henry</div>
+              <div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt=""> TEN · 16.4 proj · RB</div>
+            </div>
+            <div class="pc-pct-col"><div class="pc-pct">42%</div><div class="pc-picked">Picked</div></div>
+          </div>
+
+          <div class="pc-analysts">
+            <div class="pc-analyst-row">
+              <span class="pc-analyst-left">💎 Diamond voters pick:</span>
+              <div class="pc-analyst-right">S. Barkley <img class="pc-analyst-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt=""></div>
+            </div>
+            <div class="pc-analyst-row">
+              <span class="pc-analyst-left">🟣 Justin Boone pick:</span>
+              <div class="pc-analyst-right">S. Barkley <img class="pc-analyst-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt=""></div>
+            </div>
+            <div class="pc-analyst-row">
+              <span class="pc-analyst-left">🟣 Matt Harmon pick:</span>
+              <div class="pc-analyst-right">D. Henry <img class="pc-analyst-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt=""></div>
+            </div>
+          </div>
+          <div class="pc-lock">
+            <span style="font-size:14px;flex-shrink:0;margin-top:1px;">🔒</span>
+            <div><div class="pc-lock-info-title">S. Barkley is on Ryan's Best Team's Roster</div><div class="pc-lock-info-sub">Not available to add or start</div></div>
+          </div>
+          <button class="pc-btn-ra-only" onclick="showToast('Opening Research Assistant...')">Research Assistant</button>
+        </div>
+      </div><!-- end content-q -->
+
+
+      <!-- ══ MY VOTES TAB ══ -->
+      <div id="content-v" class="tab-content" style="display:none">
+
+        <!-- Pick Accuracy card — sticky, collapses on scroll -->
+        <div class="acc-card" id="acc-card" style="margin-top:14px;">
+          <div class="acc-body">
+            <div class="acc-eyebrow-row">
+              <span class="acc-eyebrow">Week 9 · Pick Accuracy</span>
+              <span class="acc-correct">9/12 correct</span>
+            </div>
+            <div class="acc-main-row">
+              <div>
+                <div class="acc-tier-badge">
+                  <span class="acc-tier-icon">🥇</span>
+                  <span class="acc-tier-name">Gold</span>
+                </div>
+                <div class="acc-tier-sub">Tier 3/4</div>
+              </div>
+              <div class="acc-pct-block">
+                <div class="acc-pct-big" id="acc-pct-num">0%</div>
+                <div class="acc-pct-lbl">9 of 12 correct</div>
+              </div>
+            </div>
+          </div>
+          <div class="acc-stats">
+            <div class="acc-stat"><div class="acc-stat-val">97th</div><div class="acc-stat-lbl">Percentile</div></div>
+            <div class="acc-stat"><div class="acc-stat-val">80%</div><div class="acc-stat-lbl">Expert match</div></div>
+            <div class="acc-stat"><div class="acc-stat-val">🔥 5</div><div class="acc-stat-lbl">Week Streak</div></div>
+          </div>
+          <div class="acc-diamond-row">
+            <div class="adp-header">
+              <div class="adp-label"><span>Progress to</span><span>💎</span><span style="font-weight:800;color:#5B0DCC;">Diamond</span></div>
+              <div class="adp-pct">83% accuracy</div>
+            </div>
+            <div class="adp-track"><div class="adp-fill" id="adp-fill"></div></div>
+            <div class="adp-sub">Reach 85% season accuracy to unlock Diamond Recommender status</div>
+          </div>
+        </div>
+
+        <div class="sec-lbl">
+          <span class="sec-lbl-txt">Your Votes</span>
+          <span class="sec-lbl-sub">9/12 correct</span>
+        </div>
+
+        <!-- V1: Allen ✓ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">QB · Week 9</span><span class="pc-head-badge correct">Correct</span></div>
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" alt="">
+            <div class="pc-info"><div class="pc-name">J. Allen</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt=""> BUF · 17.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">75%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" alt="">
+            <div class="pc-info"><div class="pc-name">P. Mahomes</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt=""> KC · 18.5 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">25%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">J. Allen: 28.4 pts</span> · P. Mahomes: 14.2 pts</div>
+        </div>
+
+        <!-- V2: Henry ✗ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">RB · Week 9</span><span class="pc-head-badge missed">Missed</span></div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3929630.png" alt="">
+            <div class="pc-info"><div class="pc-name">S. Barkley</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt=""> PHI · 18.5 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">63%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row missed-row">
+            <div class="pc-check missed">✗</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3043078.png" alt="">
+            <div class="pc-info"><div class="pc-name">D. Henry</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt=""> TEN · 17.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">37%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">S. Barkley: 12.1 pts</span> · D. Henry: 2.4 pts</div>
+        </div>
+
+        <!-- V3: Lamb ✓ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">WR · Week 9</span><span class="pc-head-badge correct">Correct</span></div>
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/4241389.png" alt="">
+            <div class="pc-info"><div class="pc-name">C. Lamb</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt=""> DAL · 18.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">71%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/16800.png" alt="">
+            <div class="pc-info"><div class="pc-name">D. Adams</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lv.png" alt=""> LV · 12.1 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">29%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Lamb 24.6 pts</span> · Adams 8.2 pts</div>
+        </div>
+
+        <!-- V4: Kelce ✓ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">TE · Week 9</span><span class="pc-head-badge correct">Correct</span></div>
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/15847.png" alt="">
+            <div class="pc-info"><div class="pc-name">T. Kelce</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt=""> KC · 14.2 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">82%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/4430027.png" alt="">
+            <div class="pc-info"><div class="pc-name">S. LaPorta</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/det.png" alt=""> DET · 9.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">18%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Kelce 18.3 pts</span> · LaPorta 14.1 pts</div>
+        </div>
+
+        <!-- V5: Jackson ✓ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">QB · Week 9</span><span class="pc-head-badge correct">Correct</span></div>
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3916387.png" alt="">
+            <div class="pc-info"><div class="pc-name">L. Jackson</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/bal.png" alt=""> BAL · 22.1 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">68%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/2577417.png" alt="">
+            <div class="pc-info"><div class="pc-name">D. Prescott</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt=""> DAL · 18.2 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">32%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Jackson 34.2 pts</span> · Prescott 18.9 pts</div>
+        </div>
+
+        <!-- V6: Mixon ✓ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">RB · Week 9</span><span class="pc-head-badge correct">Correct</span></div>
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3116385.png" alt="">
+            <div class="pc-info"><div class="pc-name">J. Mixon</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png" alt=""> CIN · 16.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">63%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3916148.png" alt="">
+            <div class="pc-info"><div class="pc-name">T. Pollard</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/min.png" alt=""> MIN · 11.2 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">37%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Mixon 21.4 pts</span> · Pollard 9.2 pts</div>
+        </div>
+
+        <!-- V7: Adams ✗ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">WR · Week 9</span><span class="pc-head-badge missed">Missed</span></div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3116406.png" alt="">
+            <div class="pc-info"><div class="pc-name">T. Hill</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/mia.png" alt=""> MIA · 16.2 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">72%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row missed-row">
+            <div class="pc-check missed">✗</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/16800.png" alt="">
+            <div class="pc-info"><div class="pc-name">D. Adams</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/lv.png" alt=""> LV · 11.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">28%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Hill 22.3 pts</span> · Adams 9.2 pts</div>
+        </div>
+
+        <!-- V8: LaPorta 🔥 Bold -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">TE · Week 9</span><span class="pc-head-badge bold">🔥 Bold call</span></div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/15847.png" alt="">
+            <div class="pc-info"><div class="pc-name">T. Kelce</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt=""> KC · 14.2 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">62%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row bold-row">
+            <div class="pc-check bold">🔥</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/4430027.png" alt="">
+            <div class="pc-info"><div class="pc-name">S. LaPorta</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/det.png" alt=""> DET · 9.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">38%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">LaPorta 22.1 pts</span> · Kelce 14.3 pts</div>
+        </div>
+
+        <!-- V9: Barkley ✓ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">RB · Week 9</span><span class="pc-head-badge correct">Correct</span></div>
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3929630.png" alt="">
+            <div class="pc-info"><div class="pc-name">S. Barkley</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt=""> PHI · 18.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">72%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3043078.png" alt="">
+            <div class="pc-info"><div class="pc-name">D. Henry</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt=""> TEN · 14.1 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">28%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Barkley 26.8 pts</span> · Henry 7.1 pts</div>
+        </div>
+
+        <!-- V10: Cooper ✗ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">WR · Week 9</span><span class="pc-head-badge missed">Missed</span></div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3915416.png" alt="">
+            <div class="pc-info"><div class="pc-name">D.J. Moore</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/chi.png" alt=""> CHI · 14.2 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">56%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row missed-row">
+            <div class="pc-check missed">✗</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/2976499.png" alt="">
+            <div class="pc-info"><div class="pc-name">A. Cooper</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/cle.png" alt=""> CLE · 11.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">44%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Moore 18.1 pts</span> · Cooper 8.4 pts</div>
+        </div>
+
+        <!-- V11: Hill ✓ -->
+        <div class="pcard">
+          <div class="pc-head"><span class="pc-head-left">WR · Week 9</span><span class="pc-head-badge correct">Correct</span></div>
+          <div class="pc-row winner-row">
+            <div class="pc-check correct">✓</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3116406.png" alt="">
+            <div class="pc-info"><div class="pc-name">T. Hill</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/mia.png" alt=""> MIA · 16.2 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">62%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/4372016.png" alt="">
+            <div class="pc-info"><div class="pc-name">J. Waddle</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/mia.png" alt=""> MIA · 11.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">38%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Hill 19.2 pts</span> · Waddle 12.4 pts</div>
+        </div>
+
+        <!-- V12: Pollard ✗ -->
+        <div class="pcard" style="margin-bottom:24px;">
+          <div class="pc-head"><span class="pc-head-left">RB · Week 9</span><span class="pc-head-badge missed">Missed</span></div>
+          <div class="pc-row">
+            <div class="pc-check neutral">–</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3116385.png" alt="">
+            <div class="pc-info"><div class="pc-name">J. Mixon</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png" alt=""> CIN · 16.4 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct lead">66%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-row missed-row">
+            <div class="pc-check missed">✗</div>
+            <img class="pc-hs" src="https://a.espncdn.com/i/headshots/nfl/players/full/3916148.png" alt="">
+            <div class="pc-info"><div class="pc-name">T. Pollard</div><div class="pc-sub"><img class="pc-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/min.png" alt=""> MIN · 11.2 proj</div></div>
+            <div class="pc-pct-col"><div class="pc-pct">34%</div><div class="pc-picked">Picked</div></div>
+          </div>
+          <div class="pc-footer"><span class="win-score">Mixon 18.9 pts</span> · Pollard 7.1 pts</div>
+        </div>
+
+      </div><!-- end content-v -->
+    </div><!-- end scroll -->
+  </div><!-- end s1 -->
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  function nav(toId, fromId) {
+    document.getElementById(fromId).classList.remove('active');
+    document.getElementById(fromId).classList.add('behind');
+    document.getElementById(toId).classList.add('active');
+  }
+  function back(toId, fromId) {
+    document.getElementById(fromId).classList.remove('active');
+    document.getElementById(toId).classList.remove('behind');
+    document.getElementById(toId).classList.add('active');
+  }
+
+  let accInited = false;
+  function switchTab(tab) {
+    const isQ = tab === 'q';
+    document.getElementById('tab-q').classList.toggle('on', isQ);
+    document.getElementById('tab-v').classList.toggle('on', !isQ);
+    const showEl = document.getElementById(isQ ? 'content-q' : 'content-v');
+    const hideEl = document.getElementById(isQ ? 'content-v' : 'content-q');
+    hideEl.style.display = 'none';
+    showEl.style.display = 'block';
+    showEl.classList.remove('animated');
+    void showEl.offsetWidth;
+    showEl.classList.add('animated');
+    document.getElementById('hub-scroll').scrollTop = 0;
+
+    if (!isQ && !accInited) {
+      accInited = true;
+      const el = document.getElementById('acc-pct-num');
+      let cur = 0;
+      const iv = setInterval(() => {
+        cur = Math.min(cur + 3, 75);
+        el.textContent = cur + '%';
+        if (cur >= 75) clearInterval(iv);
+      }, 28);
+      setTimeout(() => { document.getElementById('adp-fill').style.width = '83%'; }, 300);
+    }
+  }
+
+  document.getElementById('hub-scroll').addEventListener('scroll', function() {
+    const card = document.getElementById('acc-card');
+    if (!card || document.getElementById('content-v').style.display === 'none') return;
+    card.classList.toggle('collapsed', this.scrollTop > 120);
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>

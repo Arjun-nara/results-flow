@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Submission Flow — WF v2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #5B0DCC;
+      --border: #e8e8e8;
+      --surface: #fff;
+      --bg: #f4f4f4;
+      --text: #111;
+      --sub: #888;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; -webkit-tap-highlight-color:transparent; }
+    body { background:#1a1a1a; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px 20px; }
+
+    .phone {
+      width:390px; height:844px; border-radius:48px; overflow:hidden;
+      position:relative; flex-shrink:0;
+      box-shadow: 0 0 0 2px #444, 0 0 0 12px #111, 0 40px 100px rgba(0,0,0,0.9);
+      background:var(--bg);
+    }
+    .screen { position:absolute; inset:0; display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); background:var(--bg); }
+    .screen.active { transform:translateX(0); }
+    .screen.behind  { transform:translateX(-22%); }
+    .scroll { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+    .scroll::-webkit-scrollbar { display:none; }
+
+    /* ── Status bar ── */
+    .sb { display:flex; justify-content:space-between; align-items:center; padding:14px 20px 4px; background:var(--surface); flex-shrink:0; }
+    .sb-time { font-size:15px; font-weight:700; color:#111; }
+    .sb-icons { font-size:12px; color:#333; display:flex; align-items:center; gap:4px; }
+
+    /* ── Nav bar ── */
+    .nav-bar { display:flex; align-items:center; padding:4px 16px 10px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; gap:8px; }
+    .nav-back { font-size:26px; color:var(--text); cursor:pointer; line-height:1; width:28px; flex-shrink:0; }
+    .nav-center { flex:1; text-align:center; }
+    .nav-title { font-size:17px; font-weight:800; color:var(--text); }
+    .nav-sub { font-size:12px; color:var(--sub); font-weight:600; margin-top:1px; }
+    .nav-info { width:28px; height:28px; border-radius:50%; border:1.5px solid #ddd; display:flex; align-items:center; justify-content:center; font-size:13px; color:#888; cursor:pointer; flex-shrink:0; }
+    .nav-chat { position:relative; flex-shrink:0; }
+    .nav-chat-icon { font-size:22px; }
+    .nav-badge { position:absolute; top:-4px; right:-4px; background:var(--accent); color:#fff; font-size:9px; font-weight:800; min-width:16px; height:16px; border-radius:99px; display:flex; align-items:center; justify-content:center; padding:0 3px; }
+
+    /* ── Tabs (ALL CAPS) ── */
+    .tabs { display:flex; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+    .tab { flex:1; text-align:center; padding:9px 0; font-size:12px; font-weight:800; color:#aaa; border-bottom:2.5px solid transparent; letter-spacing:.3px; }
+    .tab.on { color:var(--accent); border-bottom-color:var(--accent); }
+
+    /* ── Bottom nav ── */
+    .bnav { background:var(--surface); border-top:1px solid var(--border); display:flex; padding:6px 0 26px; flex-shrink:0; }
+    .bn { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding-top:2px; }
+    .bn-icon { font-size:20px; }
+    .bn-lbl { font-size:9px; font-weight:700; color:#bbb; }
+    .bn.on .bn-lbl { color:var(--accent); }
+
+    /* ══════════════════════════════
+       S0 — TEAM PAGE
+    ══════════════════════════════ */
+    #s0 { background:var(--surface); transform:translateX(0); }
+
+    .team-meta { background:var(--surface); padding:6px 16px 10px; display:flex; align-items:center; justify-content:space-between; }
+    .team-record { font-size:22px; font-weight:800; color:var(--text); }
+    .team-vs { font-size:11px; color:var(--sub); font-weight:600; margin-top:1px; }
+
+    .action-row { display:flex; gap:8px; padding:10px 16px 8px; background:var(--surface); flex-shrink:0; }
+    .action-pill { display:flex; align-items:center; gap:5px; background:#EEF2FF; color:#3B4ECC; border-radius:20px; padding:7px 12px; font-size:12px; font-weight:700; border:none; cursor:pointer; }
+    .action-pill .dot { width:7px; height:7px; border-radius:50%; background:#FF6B00; }
+
+    .stats-header { display:flex; align-items:center; padding:4px 16px; background:#f9f9f9; border-bottom:1px solid var(--border); }
+    .sh-pos { width:32px; font-size:10px; font-weight:800; color:#aaa; }
+    .sh-name { flex:1; font-size:10px; font-weight:800; color:#aaa; }
+    .sh-stat { width:36px; text-align:right; font-size:10px; font-weight:800; color:#aaa; }
+
+    .roster-section { padding:6px 16px 3px; font-size:10px; font-weight:800; color:#aaa; text-transform:uppercase; letter-spacing:.6px; background:var(--bg); }
+    .roster-row { display:flex; align-items:center; gap:0; padding:8px 16px; border-bottom:1px solid #f0f0f0; cursor:pointer; background:var(--surface); }
+    .rr-pos { width:32px; height:32px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#fff; flex-shrink:0; margin-right:8px; }
+    .rr-hs { width:32px; height:32px; border-radius:50%; background:#e0e0e0; flex-shrink:0; margin-right:10px; overflow:hidden; }
+    .rr-hs img { width:100%; height:100%; object-fit:cover; object-position:top; }
+    .rr-info { flex:1; }
+    .rr-name { font-size:13px; font-weight:800; color:var(--text); }
+    .rr-meta { font-size:10px; color:var(--sub); margin-top:1px; display:flex; align-items:center; gap:4px; }
+    .rr-stat { width:36px; text-align:right; font-size:12px; font-weight:700; color:var(--text); }
+
+    /* RA banner on team page */
+    .ra-banner { margin:12px 16px 8px; background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px; cursor:pointer; }
+    .ra-banner-icon { width:36px; height:36px; border-radius:50%; background:#EDE9F8; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+    .ra-banner-text { flex:1; }
+    .ra-banner-title { font-size:13px; font-weight:800; color:var(--text); }
+    .ra-banner-sub { font-size:11px; color:var(--sub); margin-top:1px; }
+    .ra-banner-arrow { font-size:18px; color:#ccc; }
+
+    /* ══════════════════════════════
+       PLAYER CARD SHEET
+    ══════════════════════════════ */
+    .sheet-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.45); z-index:50; opacity:0; pointer-events:none; transition:opacity .3s; }
+    .sheet-overlay.open { opacity:1; pointer-events:all; }
+    .sheet { position:absolute; left:0; right:0; bottom:0; background:var(--surface); border-radius:20px 20px 0 0; z-index:51; transform:translateY(100%); transition:transform .32s cubic-bezier(0.4,0,0.2,1); }
+    .sheet.open { transform:translateY(0); }
+
+    .sheet-top { display:flex; align-items:flex-start; padding:16px 16px 10px; gap:12px; background:var(--surface); }
+    .sheet-info { flex:1; }
+    .sheet-name { font-size:20px; font-weight:800; color:var(--text); }
+    .sheet-meta { font-size:12px; color:var(--sub); margin-top:3px; }
+    .sheet-hs { width:56px; height:56px; border-radius:10px; background:#e8e8e8; overflow:hidden; flex-shrink:0; }
+    .sheet-hs img { width:100%; height:100%; object-fit:cover; object-position:top; }
+    .sheet-close { width:28px; height:28px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:13px; color:#666; cursor:pointer; flex-shrink:0; margin-left:4px; }
+
+    .sheet-avail { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; border-top:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0; background:var(--surface); }
+    .sheet-avail-lbl { font-size:13px; color:var(--text); font-weight:600; }
+    .sheet-avail-show { font-size:13px; color:var(--accent); font-weight:700; cursor:pointer; }
+
+    .sheet-stats-row { display:flex; padding:10px 16px; gap:24px; background:var(--surface); }
+    .sheet-stat { display:flex; flex-direction:column; gap:1px; }
+    .sheet-stat-val { font-size:16px; font-weight:800; color:var(--text); }
+    .sheet-stat-lbl { font-size:10px; color:var(--sub); font-weight:600; }
+
+    .sheet-tabs-wrap { padding:0 16px; background:var(--surface); }
+    .sheet-tabs { display:flex; border-bottom:2px solid #f0f0f0; }
+    .sheet-tab { padding:8px 0; font-size:13px; font-weight:700; color:#aaa; border-bottom:2.5px solid transparent; margin-bottom:-2px; margin-right:20px; cursor:pointer; }
+    .sheet-tab.on { color:var(--accent); border-bottom-color:var(--accent); }
+
+    .sheet-badge-row { display:flex; justify-content:space-between; align-items:center; padding:10px 16px 6px; background:var(--surface); }
+    .sheet-game-lbl { font-size:12px; font-weight:700; color:var(--text); }
+    .sheet-game-time { font-size:11px; color:var(--sub); }
+    .healthy-badge { background:#1A8A3A; color:#fff; font-size:10px; font-weight:800; padding:3px 8px; border-radius:99px; }
+
+    .sheet-news { padding:8px 16px 12px; background:var(--surface); }
+    .sheet-news-head { font-size:13px; font-weight:800; color:var(--text); margin-bottom:4px; }
+    .sheet-news-body { font-size:12px; color:#555; line-height:1.5; }
+
+    .sheet-cta-row { display:flex; justify-content:space-around; padding:14px 16px 28px; border-top:1px solid #f0f0f0; background:var(--surface); }
+    .sheet-cta { display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; }
+    .sheet-cta-circle { width:48px; height:48px; border-radius:50%; background:#f4f4f4; display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .sheet-cta-circle.ra { background:#EDE9F8; }
+    .sheet-cta-lbl { font-size:11px; font-weight:700; color:#555; }
+
+    /* ══════════════════════════════
+       S1 — RA PLAYER PICKER
+    ══════════════════════════════ */
+    #s1 { background:var(--surface); }
+
+    .ra-search-bar { margin:10px 16px 8px; display:flex; align-items:center; gap:8px; background:#f2f2f2; border-radius:10px; padding:9px 12px; flex-shrink:0; }
+    .ra-search-icon { font-size:14px; color:#aaa; }
+    .ra-search-txt { font-size:14px; color:#aaa; font-weight:500; }
+
+    .ra-filter-wrap { padding:2px 16px 8px; flex-shrink:0; }
+    .ra-filter-pill-sm { display:inline-flex; align-items:center; gap:4px; border:1.5px solid #ddd; border-radius:20px; padding:5px 12px; font-size:12px; font-weight:700; color:#555; background:var(--surface); }
+
+    .ra-cols-header { display:flex; align-items:center; padding:5px 16px; background:#f9f9f9; border-top:1px solid var(--border); border-bottom:1px solid var(--border); flex-shrink:0; }
+    .ra-cols-name { flex:1; font-size:10px; font-weight:800; color:#aaa; text-transform:uppercase; letter-spacing:.4px; }
+    .ra-cols-stat { width:52px; text-align:right; font-size:10px; font-weight:800; color:#aaa; text-transform:uppercase; letter-spacing:.3px; }
+    .ra-cols-radio { width:28px; }
+
+    .ra-player-row { display:flex; align-items:center; padding:9px 16px; border-bottom:1px solid #f2f2f2; cursor:pointer; background:var(--surface); gap:0; }
+    .ra-player-row:active { background:#f7f5ff; }
+    .ra-rank { width:28px; font-size:11px; font-weight:700; color:var(--sub); flex-shrink:0; }
+    .ra-p-hs { width:36px; height:36px; border-radius:50%; background:#e0e0e0; flex-shrink:0; margin-right:8px; overflow:hidden; }
+    .ra-p-hs img { width:100%; height:100%; object-fit:cover; object-position:top; }
+    .ra-p-info { flex:1; min-width:0; }
+    .ra-p-name { font-size:13px; font-weight:800; color:var(--text); }
+    .ra-p-meta { font-size:10px; color:var(--sub); margin-top:1px; }
+    .ra-p-stat { width:52px; text-align:right; font-size:12px; font-weight:700; color:var(--text); }
+    .ra-p-radio { width:22px; height:22px; border-radius:50%; border:2px solid #ddd; flex-shrink:0; display:flex; align-items:center; justify-content:center; margin-left:6px; }
+    .ra-p-radio.selected { border-color:var(--accent); background:var(--accent); }
+    .ra-p-radio.selected::after { content:''; width:8px; height:8px; border-radius:50%; background:#fff; display:block; }
+
+    /* bottom bar — matches production exactly */
+    .ra-bottom-bar { background:var(--surface); border-top:1px solid var(--border); flex-shrink:0; }
+    .ra-player-chips { display:flex; align-items:center; gap:8px; padding:10px 16px 4px; }
+    .ra-chip { display:flex; align-items:center; gap:6px; background:#f2f2f2; border-radius:20px; padding:6px 10px; flex:1; min-width:0; }
+    .ra-chip-hs { width:22px; height:22px; border-radius:50%; background:#ddd; flex-shrink:0; overflow:hidden; }
+    .ra-chip-hs img { width:100%; height:100%; object-fit:cover; object-position:top; }
+    .ra-chip-name { font-size:12px; font-weight:700; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ra-chip-x { font-size:13px; color:#aaa; cursor:pointer; flex-shrink:0; }
+    .ra-chip-empty { flex:1; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--accent); }
+    .ra-chip-vs { font-size:11px; font-weight:700; color:#bbb; flex-shrink:0; }
+    .ra-cta-wrap { padding:6px 16px 30px; }
+    .ra-cta-btn { width:100%; background:var(--accent); color:#fff; font-size:15px; font-weight:800; padding:13px; border-radius:12px; border:none; font-family:inherit; cursor:pointer; }
+    .ra-cta-btn:disabled { background:#ddd; color:#aaa; cursor:default; }
+
+    /* ══════════════════════════════
+       S2 — RA COMPARISON
+    ══════════════════════════════ */
+    #s2 { background:#f5f5f5; }
+
+    .ra-filter-bar { padding:10px 16px 8px; background:#f5f5f5; flex-shrink:0; }
+    .ra-filter-active { display:inline-flex; align-items:center; gap:5px; background:var(--accent); color:#fff; border-radius:20px; padding:7px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+
+    .ra-compare-header { display:flex; align-items:center; padding:4px 16px 12px; background:#f5f5f5; flex-shrink:0; }
+    .ra-compare-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
+    .ra-c-hs { width:52px; height:52px; border-radius:50%; background:#ddd; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+    .ra-c-hs img { width:100%; height:100%; object-fit:cover; object-position:top; }
+    .ra-c-name { font-size:13px; font-weight:800; color:var(--text); text-align:center; }
+    .ra-compare-vs-lbl { width:24px; text-align:center; font-size:10px; font-weight:800; color:#bbb; flex-shrink:0; }
+
+    .ra-section-wrap { padding:8px 16px 4px; background:#f5f5f5; }
+    .ra-section-badge { display:inline-block; background:#222; border-radius:8px; padding:4px 10px; }
+    .ra-section-badge span { font-size:10px; font-weight:800; color:#fff; letter-spacing:.5px; text-transform:uppercase; }
+
+    .ra-stat-row { display:flex; align-items:center; padding:11px 16px; background:var(--surface); border-bottom:1px solid #f2f2f2; }
+    .ra-stat-left { flex:1; font-size:15px; font-weight:800; color:var(--text); }
+    .ra-stat-left.green { color:#1A8A3A; }
+    .ra-stat-left.dim { color:#ccc; }
+    .ra-stat-right { flex:1; font-size:15px; font-weight:800; color:var(--text); text-align:right; }
+    .ra-stat-right.dim { color:#ccc; }
+    .ra-stat-mid { width:130px; text-align:center; font-size:11px; font-weight:700; color:#999; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:4px; }
+    .y-dot { width:14px; height:14px; border-radius:50%; background:var(--accent); display:inline-flex; align-items:center; justify-content:center; font-size:8px; color:#fff; font-weight:800; flex-shrink:0; }
+
+    .ra-spacer { height:10px; background:#f5f5f5; }
+
+    /* ── CTA ── */
+    .ra-ask-bar { padding:10px 16px 30px; background:var(--surface); border-top:1px solid var(--border); flex-shrink:0; }
+    .ra-ask-btn { width:100%; background:var(--accent); color:#fff; font-size:15px; font-weight:800; padding:13px; border-radius:12px; border:none; font-family:inherit; cursor:pointer; }
+    .ra-ask-btn.submitted { background:#f0f0f0; color:#aaa; pointer-events:none; display:flex; align-items:center; justify-content:center; gap:6px; }
+    .ra-ask-hint { text-align:center; font-size:11px; color:#aaa; font-weight:600; margin-top:6px; }
+
+    /* ══════════════════════════════
+       CONFIRMATION SHEET
+    ══════════════════════════════ */
+    .confirm-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.4); z-index:60; opacity:0; pointer-events:none; transition:opacity .3s; }
+    .confirm-overlay.open { opacity:1; pointer-events:all; }
+    .confirm-sheet { position:absolute; left:0; right:0; bottom:0; background:var(--surface); border-radius:20px 20px 0 0; z-index:61; transform:translateY(100%); transition:transform .32s cubic-bezier(0.4,0,0.2,1); padding:0 20px 36px; }
+    .confirm-sheet.open { transform:translateY(0); }
+    .confirm-handle { width:36px; height:4px; background:#ddd; border-radius:99px; margin:12px auto 20px; }
+    .confirm-icon { width:60px; height:60px; border-radius:50%; background:#EDE9F8; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:26px; }
+    .confirm-title { font-size:22px; font-weight:800; color:var(--text); text-align:center; margin-bottom:8px; }
+    .confirm-body { font-size:13px; color:#888; text-align:center; line-height:1.55; margin-bottom:20px; }
+    .confirm-players { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:24px; padding:14px 16px; background:#f7f5ff; border-radius:14px; }
+    .confirm-p { display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .confirm-p-hs { width:44px; height:44px; border-radius:50%; background:#ddd; overflow:hidden; }
+    .confirm-p-hs img { width:100%; height:100%; object-fit:cover; object-position:top; }
+    .confirm-p-name { font-size:12px; font-weight:800; color:#333; }
+    .confirm-vs { font-size:12px; font-weight:700; color:#bbb; }
+    .confirm-done-btn { width:100%; background:var(--accent); color:#fff; font-size:15px; font-weight:800; padding:14px; border-radius:12px; border:none; font-family:inherit; cursor:pointer; }
+  </style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- ══════════ S0 — TEAM PAGE ══════════ -->
+  <div id="s0" class="screen active">
+    <div class="sb"><span class="sb-time">9:41</span><span class="sb-icons">▲▲▲ WiFi ▌▌</span></div>
+    <div style="background:#fff; flex-shrink:0;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:2px 16px 6px; background:#fff;">
+        <span style="font-size:24px; color:#333; cursor:pointer;">‹</span>
+        <div style="text-align:center;">
+          <div style="font-size:16px; font-weight:800; color:#111; display:flex; align-items:center; gap:4px; justify-content:center;">
+            Ball is Life <span style="font-size:12px; color:#888;">∧</span>
+          </div>
+        </div>
+        <div class="nav-chat">
+          <span class="nav-chat-icon">💬</span>
+          <div class="nav-badge">16</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on">TEAM</div>
+        <div class="tab">MATCHUP</div>
+        <div class="tab">PLAYERS</div>
+        <div class="tab">LEAGUE</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div style="background:#fff; padding:10px 16px 8px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <div>
+            <div style="font-size:13px; font-weight:600; color:#888;">BOOK EM DEVIN</div>
+            <div style="font-size:11px; color:#aaa;">91 · 76 · 4 · 5th of 12</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:22px; font-weight:800; color:#111;">7-2</div>
+            <div style="font-size:11px; color:#888;">vs Shai Giannis</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="action-pill">Start Active Players</button>
+          <button class="action-pill"><span class="dot"></span> Player Updates</button>
+        </div>
+      </div>
+
+      <div class="stats-header">
+        <div class="sh-pos"></div>
+        <div style="width:32px;"></div>
+        <div class="sh-name" style="padding-left:10px;">FGM/A</div>
+        <div class="sh-stat">FG%</div>
+        <div class="sh-stat">PTS</div>
+      </div>
+
+      <div class="roster-section">Starters</div>
+      <div class="roster-row" onclick="openSheet()">
+        <div class="rr-pos">PG</div>
+        <div class="rr-hs"><img src="https://a.espncdn.com/i/headshots/nba/players/full/3934672.png" onerror="this.style.display='none'"></div>
+        <div class="rr-info">
+          <div class="rr-name">J. ALLEN</div>
+          <div class="rr-meta">BUF · QB · Sun 1pm vs CLE</div>
+        </div>
+        <div class="rr-stat">-/-</div>
+        <div class="rr-stat">24.6</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos">SG</div>
+        <div class="rr-hs"></div>
+        <div class="rr-info">
+          <div class="rr-name">S. BARKLEY</div>
+          <div class="rr-meta">PHI · RB · Sun 1pm vs DAL</div>
+        </div>
+        <div class="rr-stat">-/-</div>
+        <div class="rr-stat">19.8</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos" style="background:#555;">SF</div>
+        <div class="rr-hs"></div>
+        <div class="rr-info">
+          <div class="rr-name">D. HENRY</div>
+          <div class="rr-meta">TEN · RB · Sun 1pm vs HOU</div>
+        </div>
+        <div class="rr-stat">-/-</div>
+        <div class="rr-stat">14.2</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos" style="background:#888;">PF</div>
+        <div class="rr-hs"></div>
+        <div class="rr-info">
+          <div class="rr-name">C. LAMB</div>
+          <div class="rr-meta">DAL · WR · Sun 1pm vs PHI</div>
+        </div>
+        <div class="rr-stat">-/-</div>
+        <div class="rr-stat">18.4</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos" style="background:#333;">C</div>
+        <div class="rr-hs"></div>
+        <div class="rr-info">
+          <div class="rr-name">T. HILL</div>
+          <div class="rr-meta">MIA · WR · Sun 1pm vs NE</div>
+        </div>
+        <div class="rr-stat">-/-</div>
+        <div class="rr-stat">14.8</div>
+      </div>
+
+      <div class="roster-section">Bench</div>
+      <div class="roster-row">
+        <div class="rr-pos" style="background:#aaa;">BN</div>
+        <div class="rr-hs"></div>
+        <div class="rr-info">
+          <div class="rr-name">P. MAHOMES</div>
+          <div class="rr-meta">KC · QB · Sun 4:25pm vs DEN</div>
+        </div>
+        <div class="rr-stat">-/-</div>
+        <div class="rr-stat">22.1</div>
+      </div>
+      <div class="roster-row">
+        <div class="rr-pos" style="background:#aaa;">BN</div>
+        <div class="rr-hs"></div>
+        <div class="rr-info">
+          <div class="rr-name">T. POLLARD</div>
+          <div class="rr-meta">MIN · RB · Sun 1pm vs GB</div>
+        </div>
+        <div class="rr-stat">-/-</div>
+        <div class="rr-stat">8.4</div>
+      </div>
+
+      <!-- RA Banner entry point -->
+      <div class="ra-banner" onclick="goToRA()">
+        <div class="ra-banner-icon">👥</div>
+        <div class="ra-banner-text">
+          <div class="ra-banner-title">Research Assistant</div>
+          <div class="ra-banner-sub">Figure out who to sit/start or add/drop</div>
+        </div>
+        <div class="ra-banner-arrow">›</div>
+      </div>
+
+      <div style="height:12px;"></div>
+    </div>
+
+    <div class="bnav">
+      <div class="bn on"><div class="bn-icon">🏠</div><div class="bn-lbl" style="color:var(--accent)">Home</div></div>
+      <div class="bn"><div class="bn-icon">🎰</div><div class="bn-lbl">Daily Draw</div></div>
+      <div class="bn"><div class="bn-icon">📰</div><div class="bn-lbl">News</div></div>
+      <div class="bn"><div class="bn-icon">📊</div><div class="bn-lbl">Scores</div></div>
+    </div>
+
+    <!-- Player card sheet -->
+    <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+    <div class="sheet" id="player-sheet">
+      <div style="height:8px;"></div>
+      <div class="sheet-top">
+        <div class="sheet-info">
+          <div class="sheet-name">Josh Allen</div>
+          <div class="sheet-meta">QB · Buffalo Bills · #17</div>
+          <div class="sheet-meta" style="margin-top:2px;">Manager: You</div>
+        </div>
+        <div class="sheet-hs">
+          <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" onerror="this.style.display='none'">
+        </div>
+        <div class="sheet-close" onclick="closeSheet()">✕</div>
+      </div>
+      <div class="sheet-avail">
+        <span class="sheet-avail-lbl">League Availability</span>
+        <span class="sheet-avail-show">Show</span>
+      </div>
+      <div class="sheet-stats-row">
+        <div class="sheet-stat"><div class="sheet-stat-val">4</div><div class="sheet-stat-lbl">Season Rank</div></div>
+        <div class="sheet-stat"><div class="sheet-stat-val">99%</div><div class="sheet-stat-lbl">100% Rostered</div></div>
+        <div class="sheet-stat"><div class="sheet-stat-val" style="color:#aaa;">(+0% Last Week)</div><div class="sheet-stat-lbl">&nbsp;</div></div>
+      </div>
+      <div class="sheet-tabs-wrap">
+        <div class="sheet-tabs">
+          <div class="sheet-tab on">Overview</div>
+          <div class="sheet-tab">Game Log</div>
+          <div class="sheet-tab">Stats</div>
+        </div>
+      </div>
+      <div class="sheet-badge-row">
+        <div>
+          <div class="sheet-game-lbl">Today's Game</div>
+          <div class="sheet-game-time">Sun 1:00PM @ CLE</div>
+        </div>
+        <div class="healthy-badge">HEALTHY</div>
+      </div>
+      <div class="sheet-news">
+        <div class="sheet-news-head">Strong stretch continues — BUF vs CLE</div>
+        <div class="sheet-news-body">Allen has 3 TDs or more in 4 of his last 5 games. Faces a Cleveland defense ranked 28th vs QBs this season. Advice: Strong start candidate this week.</div>
+      </div>
+      <div class="sheet-cta-row">
+        <div class="sheet-cta">
+          <div class="sheet-cta-circle" style="color:#cc3300;">⬇</div>
+          <div class="sheet-cta-lbl">Drop</div>
+        </div>
+        <div class="sheet-cta" onclick="goToRAFromSheet()">
+          <div class="sheet-cta-circle ra">🔬</div>
+          <div class="sheet-cta-lbl">Research Assistant</div>
+        </div>
+        <div class="sheet-cta">
+          <div class="sheet-cta-circle">⭐</div>
+          <div class="sheet-cta-lbl">Watch</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════ S1 — RA PLAYER PICKER ══════════ -->
+  <div id="s1" class="screen">
+    <div class="sb"><span class="sb-time">9:41</span><span class="sb-icons">▲▲▲ WiFi ▌▌</span></div>
+    <div class="nav-bar">
+      <span class="nav-back" onclick="back('s0','s1')">‹</span>
+      <div class="nav-center">
+        <div class="nav-title">Research Assistant</div>
+        <div class="nav-sub">Ball is Life</div>
+      </div>
+      <div class="nav-info">i</div>
+    </div>
+
+    <div class="ra-search-bar">
+      <span class="ra-search-icon">🔍</span>
+      <span class="ra-search-txt">Search by player name</span>
+    </div>
+    <div class="ra-filter-wrap">
+      <div class="ra-filter-pill-sm">Stats ▾</div>
+    </div>
+
+    <div class="ra-cols-header">
+      <div style="width:28px;"></div>
+      <div style="width:36px; margin-right:8px;"></div>
+      <div class="ra-cols-name">My Team</div>
+      <div class="ra-cols-stat">Proj</div>
+      <div class="ra-cols-stat">Rank</div>
+      <div class="ra-cols-radio"></div>
+    </div>
+
+    <div class="scroll">
+      <div class="ra-player-row" onclick="selectPlayer('mahomes')">
+        <div class="ra-rank">7</div>
+        <div class="ra-p-hs" style="margin-right:8px;">
+          <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" onerror="this.style.display='none'">
+        </div>
+        <div class="ra-p-info">
+          <div class="ra-p-name">P. Mahomes</div>
+          <div class="ra-p-meta">KC · QB · Sun 4:25pm @ DEN</div>
+        </div>
+        <div class="ra-p-stat">22.1</div>
+        <div class="ra-p-stat">7</div>
+        <div class="ra-p-radio" id="radio-mahomes"></div>
+      </div>
+      <div class="ra-player-row">
+        <div class="ra-rank">12</div>
+        <div class="ra-p-hs" style="margin-right:8px;"></div>
+        <div class="ra-p-info">
+          <div class="ra-p-name">S. Barkley</div>
+          <div class="ra-p-meta">PHI · RB · Sun 1pm vs DAL</div>
+        </div>
+        <div class="ra-p-stat">19.8</div>
+        <div class="ra-p-stat">12</div>
+        <div class="ra-p-radio"></div>
+      </div>
+      <div class="ra-player-row">
+        <div class="ra-rank">18</div>
+        <div class="ra-p-hs" style="margin-right:8px;"></div>
+        <div class="ra-p-info">
+          <div class="ra-p-name">D. Henry</div>
+          <div class="ra-p-meta">TEN · RB · Sun 1pm vs HOU</div>
+        </div>
+        <div class="ra-p-stat">14.2</div>
+        <div class="ra-p-stat">18</div>
+        <div class="ra-p-radio"></div>
+      </div>
+      <div class="ra-player-row">
+        <div class="ra-rank">9</div>
+        <div class="ra-p-hs" style="margin-right:8px;"></div>
+        <div class="ra-p-info">
+          <div class="ra-p-name">C. Lamb</div>
+          <div class="ra-p-meta">DAL · WR · Sun 1pm vs PHI</div>
+        </div>
+        <div class="ra-p-stat">18.4</div>
+        <div class="ra-p-stat">9</div>
+        <div class="ra-p-radio"></div>
+      </div>
+      <div class="ra-player-row">
+        <div class="ra-rank">14</div>
+        <div class="ra-p-hs" style="margin-right:8px;"></div>
+        <div class="ra-p-info">
+          <div class="ra-p-name">T. Hill</div>
+          <div class="ra-p-meta">MIA · WR · Sun 1pm vs NE</div>
+        </div>
+        <div class="ra-p-stat">14.8</div>
+        <div class="ra-p-stat">14</div>
+        <div class="ra-p-radio"></div>
+      </div>
+      <div class="ra-player-row">
+        <div class="ra-rank">21</div>
+        <div class="ra-p-hs" style="margin-right:8px;"></div>
+        <div class="ra-p-info">
+          <div class="ra-p-name">T. Kelce</div>
+          <div class="ra-p-meta">KC · TE · Sun 4:25pm vs DEN</div>
+        </div>
+        <div class="ra-p-stat">12.1</div>
+        <div class="ra-p-stat">21</div>
+        <div class="ra-p-radio"></div>
+      </div>
+      <div style="height:8px;"></div>
+    </div>
+
+    <div class="ra-bottom-bar">
+      <div class="ra-player-chips">
+        <div class="ra-chip">
+          <div class="ra-chip-hs">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" onerror="this.style.display='none'">
+          </div>
+          <span class="ra-chip-name">J. Allen</span>
+          <span class="ra-chip-x">✕</span>
+        </div>
+        <span class="ra-chip-vs">vs</span>
+        <div class="ra-chip" id="chip-right" style="background:transparent; border:1.5px dashed #ddd; justify-content:center;">
+          <span class="ra-chip-empty" id="chip-right-lbl">Select Player</span>
+        </div>
+      </div>
+      <div class="ra-cta-wrap">
+        <button class="ra-cta-btn" id="compare-btn" disabled onclick="nav('s2','s1')">Compare Players</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════ S2 — RA COMPARISON ══════════ -->
+  <div id="s2" class="screen">
+    <div class="sb" style="background:#fff;"><span class="sb-time">9:41</span><span class="sb-icons">▲▲▲ WiFi ▌▌</span></div>
+    <div class="nav-bar">
+      <span class="nav-back" onclick="back('s1','s2')">‹</span>
+      <div class="nav-center">
+        <div class="nav-title">Research Assistant</div>
+        <div class="nav-sub">Ball is Life</div>
+      </div>
+      <div class="nav-info">i</div>
+    </div>
+
+    <div class="scroll">
+      <div class="ra-filter-bar">
+        <div class="ra-filter-active">Next 7 Days (proj) ▾</div>
+      </div>
+
+      <div class="ra-compare-header">
+        <div class="ra-compare-col">
+          <div class="ra-c-hs">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" onerror="this.style.display='none'">
+          </div>
+          <div class="ra-c-name">Josh Allen</div>
+        </div>
+        <div class="ra-compare-vs-lbl">vs</div>
+        <div class="ra-compare-col">
+          <div class="ra-c-hs">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" onerror="this.style.display='none'">
+          </div>
+          <div class="ra-c-name">P. Mahomes</div>
+        </div>
+      </div>
+
+      <div class="ra-section-wrap"><div class="ra-section-badge"><span>Profile</span></div></div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left">Josh Allen</div>
+        <div class="ra-stat-mid">Name</div>
+        <div class="ra-stat-right">P. Mahomes</div>
+      </div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left dim">—</div>
+        <div class="ra-stat-mid"><span class="y-dot">Y</span> Recommendation</div>
+        <div class="ra-stat-right dim">—</div>
+      </div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left">BUF · QB</div>
+        <div class="ra-stat-mid">Team & Position</div>
+        <div class="ra-stat-right">KC · QB</div>
+      </div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left">Starting QB</div>
+        <div class="ra-stat-mid">Status</div>
+        <div class="ra-stat-right">Starting QB</div>
+      </div>
+
+      <div class="ra-spacer"></div>
+
+      <div class="ra-section-wrap"><div class="ra-section-badge"><span>Overview</span></div></div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left green">4</div>
+        <div class="ra-stat-mid">Proj Wk Rank</div>
+        <div class="ra-stat-right">7</div>
+      </div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left dim">—</div>
+        <div class="ra-stat-mid"><span class="y-dot">Y</span> Position Rank</div>
+        <div class="ra-stat-right dim">—</div>
+      </div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left">vs CLE</div>
+        <div class="ra-stat-mid">Matchup</div>
+        <div class="ra-stat-right">vs DEN</div>
+      </div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left green">99%</div>
+        <div class="ra-stat-mid">% Rostered</div>
+        <div class="ra-stat-right green">99%</div>
+      </div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left green">24.6</div>
+        <div class="ra-stat-mid">Proj Pts</div>
+        <div class="ra-stat-right">22.1</div>
+      </div>
+      <div class="ra-stat-row">
+        <div class="ra-stat-left green">31.2</div>
+        <div class="ra-stat-mid">Season Avg</div>
+        <div class="ra-stat-right">28.4</div>
+      </div>
+
+      <div style="height:12px; background:#f5f5f5;"></div>
+    </div>
+
+    <!-- Bottom player bar -->
+    <div style="background:var(--surface); border-top:1px solid var(--border); flex-shrink:0;">
+      <div class="ra-player-chips">
+        <div class="ra-chip">
+          <div class="ra-chip-hs">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" onerror="this.style.display='none'">
+          </div>
+          <span class="ra-chip-name">J. Allen</span>
+          <span class="ra-chip-x">✕</span>
+        </div>
+        <span class="ra-chip-vs">vs</span>
+        <div class="ra-chip">
+          <div class="ra-chip-hs">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" onerror="this.style.display='none'">
+          </div>
+          <span class="ra-chip-name">P. Mahomes</span>
+          <span class="ra-chip-x">✕</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ra-ask-bar">
+      <button class="ra-ask-btn" id="ask-btn" onclick="submitPoll()">Ask the fans</button>
+      <div class="ra-ask-hint" id="ask-hint">Ask the community who they'd start</div>
+    </div>
+
+    <!-- Confirmation sheet -->
+    <div class="confirm-overlay" id="confirm-overlay" onclick="dismissConfirm()"></div>
+    <div class="confirm-sheet" id="confirm-sheet">
+      <div class="confirm-handle"></div>
+      <div class="confirm-icon">✅</div>
+      <div class="confirm-title">Poll submitted!</div>
+      <div class="confirm-body">We'll let you know when votes start coming in.<br>Check back after games kick off.</div>
+      <div class="confirm-players">
+        <div class="confirm-p">
+          <div class="confirm-p-hs">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" onerror="this.style.display='none'">
+          </div>
+          <div class="confirm-p-name">J. Allen</div>
+        </div>
+        <div class="confirm-vs">vs</div>
+        <div class="confirm-p">
+          <div class="confirm-p-hs">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" onerror="this.style.display='none'">
+          </div>
+          <div class="confirm-p-name">P. Mahomes</div>
+        </div>
+      </div>
+      <button class="confirm-done-btn" onclick="dismissConfirm()">Done</button>
+    </div>
+  </div>
+
+</div>
+<script>
+  function nav(toId, fromId) {
+    document.getElementById(fromId).classList.remove('active');
+    document.getElementById(fromId).classList.add('behind');
+    document.getElementById(toId).classList.add('active');
+  }
+  function back(toId, fromId) {
+    document.getElementById(fromId).classList.remove('active');
+    document.getElementById(toId).classList.remove('behind');
+    document.getElementById(toId).classList.add('active');
+  }
+  function openSheet() {
+    document.getElementById('sheet-overlay').classList.add('open');
+    document.getElementById('player-sheet').classList.add('open');
+  }
+  function closeSheet() {
+    document.getElementById('sheet-overlay').classList.remove('open');
+    document.getElementById('player-sheet').classList.remove('open');
+  }
+  function goToRA() { nav('s1', 's0'); }
+  function goToRAFromSheet() {
+    closeSheet();
+    setTimeout(() => nav('s1', 's0'), 180);
+  }
+  function selectPlayer(id) {
+    document.querySelectorAll('.ra-p-radio').forEach(r => r.classList.remove('selected'));
+    document.getElementById('radio-' + id).classList.add('selected');
+    const chipRight = document.getElementById('chip-right');
+    chipRight.style.background = '#f2f2f2';
+    chipRight.style.border = 'none';
+    chipRight.innerHTML = `
+      <div class="ra-chip-hs"><img src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" onerror="this.style.display='none'"></div>
+      <span class="ra-chip-name">P. Mahomes</span>
+      <span class="ra-chip-x">✕</span>
+    `;
+    document.getElementById('compare-btn').disabled = false;
+  }
+  function submitPoll() {
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-sheet').classList.add('open');
+  }
+  function dismissConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+    document.getElementById('confirm-sheet').classList.remove('open');
+    const btn = document.getElementById('ask-btn');
+    btn.classList.add('submitted');
+    btn.textContent = '✓ Poll submitted';
+    document.getElementById('ask-hint').textContent = 'Check back later to see how the community voted';
+  }
+</script>
+</body>
+</html>
