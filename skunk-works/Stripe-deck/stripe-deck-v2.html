@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Arjun Narayanan — Stripe Portfolio</title>
+  <style>
+    :root {
+      --purple: #635BFF;
+      --navy:   #0A2540;
+      --dark:   #080C14;
+      --cyan:   #00D4FF;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: var(--dark);
+      color: #fff;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── Slide shell ── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+    }
+    .slide.active { display: flex; }
+
+    /* Default: vertical center */
+    .slide-v {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Two-column */
+    .slide-h {
+      flex-direction: row;
+    }
+    .col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 56px;
+      overflow: hidden;
+    }
+    .col-dark { background: rgba(0,0,0,0.3); }
+
+    /* ── Progress + counter ── */
+    #progress {
+      position: fixed; top: 0; left: 0;
+      height: 2px; background: var(--purple);
+      transition: width .3s; z-index: 200;
+    }
+    #section {
+      position: fixed; top: 20px; left: 28px;
+      font-size: 10px; letter-spacing: .14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.25);
+      font-weight: 600; z-index: 200;
+    }
+    .nav {
+      position: fixed; bottom: 20px; right: 24px;
+      display: flex; align-items: center; gap: 10px; z-index: 200;
+    }
+    .nav span {
+      font-size: 11px; color: rgba(255,255,255,.3);
+      font-variant-numeric: tabular-nums;
+    }
+    .nav button {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: #fff; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav button:hover { background: rgba(255,255,255,.12); }
+
+    /* ── Typography ── */
+    .eyebrow {
+      font-size: 10px; letter-spacing: .16em;
+      text-transform: uppercase; color: var(--purple);
+      font-weight: 700; margin-bottom: 12px;
+    }
+    h1 { font-size: 58px; font-weight: 700; line-height: 1.08; letter-spacing: -.03em; }
+    h2 { font-size: 42px; font-weight: 700; line-height: 1.1;  letter-spacing: -.025em; }
+    h3 { font-size: 28px; font-weight: 600; line-height: 1.2;  letter-spacing: -.015em; }
+    p  { font-size: 16px; line-height: 1.7; color: rgba(255,255,255,.6); }
+    .small { font-size: 13px; color: rgba(255,255,255,.35); line-height: 1.6; }
+
+    /* ── Shared components ── */
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .tag {
+      padding: 5px 13px; border-radius: 100px;
+      font-size: 11px; font-weight: 600;
+      background: rgba(99,91,255,.12);
+      border: 1px solid rgba(99,91,255,.28);
+      color: rgba(255,255,255,.75);
+    }
+
+    .quote {
+      font-size: 18px; line-height: 1.55; font-style: italic;
+      color: rgba(255,255,255,.8);
+      border-left: 3px solid var(--purple);
+      padding-left: 20px; margin: 24px 0;
+    }
+
+    .bullets { list-style: none; margin-top: 16px; }
+    .bullets li {
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 15px; color: rgba(255,255,255,.65);
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .bullets li::before {
+      content: '→'; color: var(--purple);
+      font-size: 12px; margin-top: 3px; flex-shrink: 0;
+    }
+
+    /* Stat cards */
+    .stats { display: grid; gap: 14px; width: 100%; }
+    .stats-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .stats-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .stat {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 28px 20px; text-align: center;
+    }
+    .stat-num {
+      font-size: 44px; font-weight: 700; line-height: 1;
+      background: linear-gradient(135deg, var(--purple), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 8px;
+    }
+    .stat-lbl { font-size: 12px; color: rgba(255,255,255,.4); line-height: 1.5; }
+
+    /* Grid cards */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+    .card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px; padding: 22px 24px;
+    }
+    .card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .card p  { font-size: 13px; color: rgba(255,255,255,.42); line-height: 1.5; }
+
+    /* Process steps */
+    .steps { display: flex; width: 100%; margin-top: 24px; }
+    .step {
+      flex: 1; padding: 16px 20px;
+      border-left: 1px solid rgba(255,255,255,.08);
+    }
+    .step:first-child { border-left: none; }
+    .step-n { font-size: 9px; color: var(--purple); font-weight: 700; letter-spacing: .12em; margin-bottom: 6px; }
+    .step-t { font-size: 14px; font-weight: 600; margin-bottom: 5px; color: rgba(255,255,255,.9); }
+    .step-d { font-size: 12px; color: rgba(255,255,255,.38); line-height: 1.5; }
+
+    /* Image helpers */
+    .img-wrap {
+      border-radius: 10px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .img-wrap img { width: 100%; display: block; }
+    .cap { font-size: 10px; color: rgba(255,255,255,.25); margin-top: 7px; text-align: center; letter-spacing: .03em; }
+
+    .img2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .img3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* Inner content container */
+    .inner {
+      width: 100%; max-width: 920px;
+      padding: 60px 72px;
+    }
+
+    /* Project cover big number */
+    .bignumber {
+      position: absolute; right: 48px; bottom: -20px;
+      font-size: 240px; font-weight: 800;
+      color: rgba(255,255,255,.025);
+      line-height: 1; letter-spacing: -.06em;
+      pointer-events: none; user-select: none;
+    }
+
+    /* Placeholder */
+    .placeholder {
+      background: rgba(99,91,255,.08);
+      border: 2px dashed rgba(99,91,255,.3);
+      border-radius: 10px; padding: 28px;
+      max-width: 560px;
+    }
+    .placeholder p { color: rgba(160,155,255,.85); font-size: 14px; }
+
+    /* Cover gradient */
+    .cover-bg {
+      background: var(--navy);
+      background-image:
+        radial-gradient(ellipse 100% 60% at 50% -5%, rgba(99,91,255,.35) 0%, transparent 60%),
+        radial-gradient(ellipse 35% 35% at 85% 88%, rgba(0,212,255,.08) 0%, transparent 55%);
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="section"></div>
+
+<!-- ═══════════════════════════════════
+     1 · COVER
+═══════════════════════════════════ -->
+<div class="slide slide-v cover-bg" data-sec="">
+  <div style="text-align:center; padding:48px;">
+    <div class="eyebrow" style="margin-bottom:24px;">Product Design Portfolio · 2025</div>
+    <h1 style="margin-bottom:16px;">Arjun Narayanan</h1>
+    <p style="font-size:18px; color:rgba(255,255,255,.4); max-width:440px; margin:0 auto;">IC Product Designer · Fintech &amp; B2B SaaS</p>
+    <div style="display:flex; gap:14px; justify-content:center; margin-top:44px; flex-wrap:wrap;">
+      <div style="padding:12px 24px; background:rgba(99,91,255,.15); border:1px solid rgba(99,91,255,.32); border-radius:100px; font-size:13px; font-weight:500;">01 · External Account Linking</div>
+      <div style="padding:12px 24px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:100px; font-size:13px; font-weight:500;">02 · Pursuit Tracking</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     2 · INTRO PLACEHOLDER
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Intro" style="background:#07101F;">
+  <div class="inner">
+    <div class="eyebrow">About Me</div>
+    <h2 style="margin-bottom:28px; max-width:520px;">A little about who I am</h2>
+    <div class="placeholder">
+      <p><strong>Fill in before presenting:</strong> How you got into design · a personal detail or two · what draws you to Stripe's payments work specifically — complexity, trust, global scale</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     3 · AGENDA
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Agenda" style="background:#080C14;">
+  <div class="inner">
+    <div class="eyebrow">Today</div>
+    <h2 style="margin-bottom:36px;">Two projects · ~30 minutes</h2>
+    <div class="grid2" style="max-width:760px;">
+      <div class="card" style="border-color:rgba(99,91,255,.28); background:rgba(99,91,255,.07); padding:28px;">
+        <div class="eyebrow" style="font-size:9px; margin-bottom:6px;">Project 01 · ~15 min</div>
+        <h4 style="font-size:17px; margin-bottom:8px;">External Account Linking</h4>
+        <p style="font-size:13px;">Driving fintech engagement by surfacing a hidden feature.<br>Wealthsimple Cash · 2022 · iOS &amp; Android</p>
+      </div>
+      <div class="card" style="padding:28px;">
+        <div class="eyebrow" style="font-size:9px; margin-bottom:6px;">Project 02 · ~15 min</div>
+        <h4 style="font-size:17px; margin-bottom:8px;">Pursuit Tracking</h4>
+        <p style="font-size:13px;">Adding a new project type to B2B workforce planning SaaS.<br>Bench · 2020–21 · Web / iOS / Android</p>
+      </div>
+    </div>
+    <p class="small" style="margin-top:20px; max-width:600px;">Problem → research → design → impact. Happy to pause for questions anytime.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     4 · PROJECT 01 DIVIDER
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="" style="background:#07071A; overflow:hidden;">
+  <div class="bignumber">01</div>
+  <div class="inner" style="position:relative; z-index:1;">
+    <div class="eyebrow">Project 01 · Wealthsimple Cash · 2022</div>
+    <h1 style="font-size:50px; margin-bottom:18px; max-width:640px;">External Account Linking</h1>
+    <p style="font-size:17px; max-width:500px;">Building trust and driving engagement — keeping cash flowing beyond the referral program</p>
+    <div class="tags" style="margin-top:28px;">
+      <span class="tag">iOS &amp; Android</span>
+      <span class="tag">IC Designer</span>
+      <span class="tag">6 weeks</span>
+      <span class="tag">A/B Test</span>
+      <span class="tag">Fintech · Payments</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     5 · EAL — CONTEXT
+═══════════════════════════════════ -->
+<div class="slide slide-h" data-sec="External Account Linking" style="background:#07070F;">
+  <div class="col">
+    <div class="eyebrow">Context</div>
+    <h3 style="margin-bottom:20px;">A referral program that worked too well</h3>
+    <p style="margin-bottom:16px;">Wealthsimple Cash targeted 18–25 year olds as a better alternative to e-transfers — Canada's answer to Venmo or Cash App.</p>
+    <p style="margin-bottom:16px;">A $15–$25 referral bonus drove explosive campus growth. Some students earned close to <span style="color:var(--purple);">$1,000</span> through referrals alone.</p>
+    <p class="small">But once the money left their wallets, users reverted to e-transfers — or left the ecosystem entirely.</p>
+  </div>
+  <div class="col col-dark" style="align-items:center; justify-content:center; padding:48px;">
+    <div style="max-width:300px; width:100%;">
+      <img src="../External%20Account%20Linking%20%E2%80%94%20Arjun_files/image.png"
+           style="width:100%; border-radius:14px; border:1px solid rgba(255,255,255,.1);"
+           onerror="this.style.display='none'">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     6 · EAL — DISCOVERY
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="External Account Linking" style="background:#06060F;">
+  <div class="inner">
+    <div class="eyebrow">The Discovery</div>
+    <h3 style="margin-bottom:14px;">A hidden feature almost nobody knew existed</h3>
+    <p style="max-width:580px; margin-bottom:28px;">Frequent senders would top up wallets and keep going — but there was an untapped path: sending directly from an external bank account. Almost nobody used it.</p>
+    <div class="stats stats-3">
+      <div class="stat">
+        <div class="stat-num" style="font-size:38px;">1 in 10</div>
+        <div class="stat-lbl">users knew they could send from a bank account</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="font-size:38px;">47%</div>
+        <div class="stat-lbl">of frequent senders already had a connected external account</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="font-size:38px;">~0</div>
+        <div class="stat-lbl">visible benefit shown for linking — the toggle went unnoticed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     7 · EAL — BUSINESS CASE
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="External Account Linking" style="background:#070710;">
+  <div class="inner">
+    <div class="eyebrow">Why It Matters</div>
+    <h3 style="margin-bottom:20px;">Users who linked were meaningfully different</h3>
+    <ul class="bullets">
+      <li>More likely to engage in frequent send activity</li>
+      <li>Less likely to exploit the referral program</li>
+      <li>More likely to fund WS Invest and Trade — <em style="color:rgba(255,255,255,.8);">the actual revenue drivers</em></li>
+      <li>Less likely to leave the Wealthsimple ecosystem entirely</li>
+      <li>More likely to have a higher average send — setting up a future bill pay feature</li>
+    </ul>
+    <div class="quote" style="max-width:600px; margin-top:28px;">
+      "If we could get more people linking accounts, we could get more engaged users and fewer bad actors."
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     8 · EAL — ROOT CAUSES
+═══════════════════════════════════ -->
+<div class="slide slide-h" data-sec="External Account Linking" style="background:#060610;">
+  <div class="col">
+    <div class="eyebrow">Problem Framing</div>
+    <h3 style="margin-bottom:20px;">Four reasons the feature stayed invisible</h3>
+    <ul class="bullets">
+      <li>Default source was always the WS Wallet — no prompt to switch</li>
+      <li>The toggle to change source was easy to miss</li>
+      <li>No visible benefit to linking a bank account</li>
+      <li>Users had trust concerns about connecting a personal account</li>
+    </ul>
+    <p class="small" style="margin-top:20px;">A tooltip band-aid had minimal effect. A deeper intervention was needed.</p>
+  </div>
+  <div class="col col-dark" style="align-items:center; justify-content:center; padding:44px;">
+    <div style="width:100%; max-width:320px;">
+      <img src="../External%20Account%20Linking%20%E2%80%94%20Arjun_files/98894230.png"
+           style="width:100%; border-radius:12px; border:1px solid rgba(255,255,255,.08);"
+           onerror="this.style.display='none'">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     9 · EAL — PROCESS
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="External Account Linking" style="background:#07070E;">
+  <div class="inner">
+    <div class="eyebrow">Design Process</div>
+    <h3 style="margin-bottom:20px;">Exploring the solution space</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-t">Send Flow First</div>
+        <div class="step-d">Tackle default wallet bias and the invisible toggle</div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-t">Scope Expansion</div>
+        <div class="step-d">Realized trust + value prop needed addressing, not just UI</div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-t">Education Page</div>
+        <div class="step-d">Added a new page in the linking flow explaining the "why"</div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-t">A/B Test</div>
+        <div class="step-d">Shipped as a controlled experiment to validate direction</div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:24px; max-width:620px;">Timeline constraints meant skipping a full linking flow overhaul. I flagged the default-bias tradeoff before shipping — we aligned on a lower-lift test first.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     10 · EAL — FINAL DESIGN
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="External Account Linking" style="background:#060610;">
+  <div class="inner">
+    <div class="eyebrow">Final Design</div>
+    <h3 style="margin-bottom:14px;">From toggle to intentional selection</h3>
+    <p style="max-width:560px; margin-bottom:24px;">Replaced the toggle with a bottom sheet forcing an explicit source choice. Added an account-linking education page addressing the trust and value gap.</p>
+    <div class="img3">
+      <div>
+        <div class="img-wrap">
+          <img src="../External%20Account%20Linking%20%E2%80%94%20Arjun_files/98894232.png"
+               onerror="this.parentElement.style.height='180px'">
+        </div>
+        <div class="cap">Source selection sheet</div>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="../External%20Account%20Linking%20%E2%80%94%20Arjun_files/98894233.png"
+               onerror="this.parentElement.style.height='180px'">
+        </div>
+        <div class="cap">Account linking value prop</div>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="../External%20Account%20Linking%20%E2%80%94%20Arjun_files/98894234.png"
+               onerror="this.parentElement.style.height='180px'">
+        </div>
+        <div class="cap">Confirmation state</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     11 · EAL — RESULTS
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="External Account Linking" style="background:#06060E;">
+  <div class="inner">
+    <div class="eyebrow">Impact</div>
+    <h3 style="margin-bottom:28px;">The A/B test results</h3>
+    <div class="stats stats-3" style="margin-bottom:24px;">
+      <div class="stat">
+        <div class="stat-num">3×</div>
+        <div class="stat-lbl">more external account sends on 3 separate days in the experiment</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="font-size:36px;">Higher</div>
+        <div class="stat-lbl">send completion rate for treatment group throughout the full experiment</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="font-size:36px;">Zero</div>
+        <div class="stat-lbl">negative impact on wallet send flow — we didn't break anything</div>
+      </div>
+    </div>
+    <div class="img2">
+      <div>
+        <div class="img-wrap">
+          <img src="../External%20Account%20Linking%20%E2%80%94%20Arjun_files/Send%2Bflow%2Bcompletion%2Brate%2Bby%2Bgroup.png"
+               onerror="this.parentElement.style.height='140px'">
+        </div>
+        <div class="cap">Send flow completion rate by group</div>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="../External%20Account%20Linking%20%E2%80%94%20Arjun_files/%25%2Bdebit%2Bor%2Bbank-funded%2Bsend%2Bflows%2Bby%2Bdays%2Bin%2Bexperiment.png"
+               onerror="this.parentElement.style.height='140px'">
+        </div>
+        <div class="cap">% bank-funded sends by day in experiment</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     12 · EAL — REFLECTION
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="External Account Linking" style="background:#070710;">
+  <div class="inner">
+    <div class="eyebrow">Reflection</div>
+    <h3 style="margin-bottom:24px;">What I'd do differently</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>Push harder on the linking flow</h4>
+        <p>The plateau near the end of the experiment suggests the education page alone wasn't enough. A fuller overhaul was probably warranted.</p>
+      </div>
+      <div class="card">
+        <h4>Quantify the default bias risk</h4>
+        <p>I flagged it verbally — should have put data behind it to make the tradeoff clearer for PM and stakeholders.</p>
+      </div>
+      <div class="card">
+        <h4>Instrument trust signals</h4>
+        <p>Relied on qualitative feedback for trust concerns. Better to have measured specific trust signals in-product.</p>
+      </div>
+      <div class="card">
+        <h4>Plan iteration from day one</h4>
+        <p>Saw a plateau, then the window closed. Building iteration cycles into the timeline upfront would have helped.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     13 · PROJECT 02 DIVIDER
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="" style="background:#07071A; overflow:hidden;">
+  <div class="bignumber">02</div>
+  <div class="inner" style="position:relative; z-index:1;">
+    <div class="eyebrow">Project 02 · Bench · 2020–21</div>
+    <h1 style="font-size:50px; margin-bottom:18px; max-width:640px;">Pursuit Tracking</h1>
+    <p style="font-size:17px; max-width:500px;">Helping construction companies understand and plan for their future workforce</p>
+    <div class="tags" style="margin-top:28px;">
+      <span class="tag">Web · iOS · Android</span>
+      <span class="tag">IC Designer</span>
+      <span class="tag">4 months</span>
+      <span class="tag">Generative + Evaluative Research</span>
+      <span class="tag">B2B SaaS</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     14 · PURSUIT — CONTEXT
+═══════════════════════════════════ -->
+<div class="slide slide-h" data-sec="Pursuit Tracking" style="background:#07070E;">
+  <div class="col">
+    <div class="eyebrow">Context</div>
+    <h3 style="margin-bottom:20px;">Bench is workforce planning for construction</h3>
+    <p style="margin-bottom:16px;">Construction companies use Bench to allocate people across projects. But projects don't appear overnight — there's always a period where a company has bid on work but hasn't won it yet.</p>
+    <p style="margin-bottom:16px;">These pre-award projects are called <span style="color:var(--purple);">pursuits</span>. Bench had no concept of them.</p>
+    <p class="small">Not being able to track pursuits was leading to lost sales opportunities and frustrated customers.</p>
+  </div>
+  <div class="col col-dark" style="align-items:center; justify-content:center; padding:44px;">
+    <div style="width:100%;">
+      <div class="img-wrap">
+        <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/Project%2BGantt%2B-%2BBaseline.png"
+             onerror="this.parentElement.style.height='200px'">
+      </div>
+      <div class="cap" style="margin-top:8px;">Project Gantt — before pursuits</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     15 · PURSUIT — PROBLEM
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Pursuit Tracking" style="background:#06060E;">
+  <div class="inner">
+    <div class="eyebrow">The Problem</div>
+    <h3 style="margin-bottom:16px;">Users were hacking the product to fill the gap</h3>
+    <p class="small" style="max-width:600px; margin-bottom:22px;">These workarounds created allocation conflicts and dirty data — but they were a clear signal demand was real.</p>
+    <div class="grid2">
+      <div class="card">
+        <h4>1% Allocations</h4>
+        <p>Allocating people at 1% to mark potential work without affecting real forecasts</p>
+      </div>
+      <div class="card">
+        <h4>Colour Coding</h4>
+        <p>Using project colours as a makeshift status system outside intended workflow</p>
+      </div>
+      <div class="card">
+        <h4>Shell Projects</h4>
+        <p>Empty projects with zero allocations and notes indicating who could fill roles</p>
+      </div>
+      <div class="card" style="border-color:rgba(99,91,255,.28); background:rgba(99,91,255,.07);">
+        <h4 style="color:rgba(160,155,255,.9);">17% Signal</h4>
+        <p>17% of accounts already tracking multiple pursuit-stage fields — quantified demand</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     16 · PURSUIT — RESEARCH
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Pursuit Tracking" style="background:#070710;">
+  <div class="inner">
+    <div class="eyebrow">Research Process</div>
+    <h3 style="margin-bottom:20px;">Understanding the full picture before designing</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-t">Usage Data</div>
+        <div class="step-d">Analyzed 1% allocations, colour patterns, shell project behaviour</div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-t">CS Calls</div>
+        <div class="step-d">Sat in on customer success calls — qualitative signal on real workflows</div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-t">HMW Workshop</div>
+        <div class="step-d">Cross-squad brainstorm to prioritize and build early alignment</div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-t">Concept Tests</div>
+        <div class="step-d">7 client sessions with concept mockups — tested 4 key flows</div>
+      </div>
+    </div>
+    <div class="quote" style="max-width:600px; margin-top:28px; font-size:16px;">
+      "People wanted to track pursuits so they could build forecasts to predict how best to allocate their workforce in the coming months and years."
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     17 · PURSUIT — ALIGNMENT
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Pursuit Tracking" style="background:#060610;">
+  <div class="inner">
+    <div class="eyebrow">Cross-functional Alignment</div>
+    <h3 style="margin-bottom:16px;">Involving all squads early</h3>
+    <p style="max-width:560px; margin-bottom:22px;">Running HMWs with product, design, and dev surfaced where each team thought pursuits were headed — and which areas mattered most to them.</p>
+    <div class="img2">
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/HMW.png"
+               onerror="this.parentElement.style.height='200px'">
+        </div>
+        <div class="cap">HMW brainstorm — cross-squad session</div>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/Zoom.png"
+               onerror="this.parentElement.style.height='200px'">
+        </div>
+        <div class="cap">Remote research sessions</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     18 · PURSUIT — TECH CONSTRAINT
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Pursuit Tracking" style="background:#07070E;">
+  <div class="inner">
+    <div class="eyebrow">Technical Challenge</div>
+    <h3 style="margin-bottom:16px;">The concept worked. The backend didn't exist.</h3>
+    <p style="max-width:580px; margin-bottom:24px;">The most resonant features from concept testing couldn't be built — Bench only had date-dependent statuses, creating hard constraints on what a "pursuit" could be.</p>
+    <div class="grid2" style="max-width:700px;">
+      <div class="card" style="border-color:rgba(255,80,80,.18); background:rgba(255,60,60,.05);">
+        <h4 style="color:rgba(255,130,130,.9);">Current State</h4>
+        <p>Status tied to project dates. No user-controlled status. Allocation conflicts when hacking pursuits in.</p>
+      </div>
+      <div class="card" style="border-color:rgba(99,91,255,.28); background:rgba(99,91,255,.06);">
+        <h4 style="color:rgba(160,155,255,.9);">Proposed Architecture</h4>
+        <p>New "project type" + date-independent statuses — enables pursuits today and custom statuses as a future unlock.</p>
+      </div>
+    </div>
+    <p class="small" style="margin-top:20px; max-width:580px;">After discussion with dev and PM, we agreed the backend lift was worth it. Getting this foundation right would pay dividends well beyond pursuits.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     19 · PURSUIT — FINAL DESIGN
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Pursuit Tracking" style="background:#060610;">
+  <div class="inner">
+    <div class="eyebrow">Final Design</div>
+    <h3 style="margin-bottom:14px;">Pursuits across every surface</h3>
+    <p style="max-width:580px; margin-bottom:22px;">Pursuits impacted every part of the product where project status appeared. Hatched border + reduced opacity creates visual differentiation without disrupting existing patterns.</p>
+    <div class="img3">
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/Project%2BGantt%2B-%2BDash%2B-%2BCollapsed%2B-%2BPhases.png"
+               onerror="this.parentElement.style.height='150px'">
+        </div>
+        <div class="cap">Project Gantt — pursuit state</div>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/People%2BGantt%2B-%2BDash%2B-%2BProject%2BLite%2BColours%2B-%2B1.png"
+               onerror="this.parentElement.style.height='150px'">
+        </div>
+        <div class="cap">People Gantt — pursuit allocations</div>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/Adding%2Ban%2BOpportunity%2B-%2BProject%2BList.png"
+               onerror="this.parentElement.style.height='150px'">
+        </div>
+        <div class="cap">Adding an opportunity</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     20 · PURSUIT — MORE DESIGN
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Pursuit Tracking" style="background:#07070F;">
+  <div class="inner">
+    <div class="eyebrow">Final Design · Continued</div>
+    <h3 style="margin-bottom:16px;">Edge cases and the full system</h3>
+    <p class="small" style="max-width:580px; margin-bottom:22px;">Going from concept to handoff surfaced a key lesson: testing mockups had included future-facing patterns that influenced client responses — had to rejigg for the real product system.</p>
+    <div class="img2">
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/6%2B-%2BProject%2BList%2B-%2BPursuit%2BAdded.png"
+               onerror="this.parentElement.style.height='180px'">
+        </div>
+        <div class="cap">Project list — pursuit indicator</div>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/People%2BList.png"
+               onerror="this.parentElement.style.height='180px'">
+        </div>
+        <div class="cap">People list — pursuit context</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     21 · PURSUIT — IMPACT
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Pursuit Tracking" style="background:#06060E;">
+  <div class="inner">
+    <div class="eyebrow">Impact · Launched April 2021</div>
+    <h3 style="margin-bottom:28px;">Immediate, measurable traction</h3>
+    <div class="stats stats-4" style="margin-bottom:20px;">
+      <div class="stat">
+        <div class="stat-num" style="font-size:36px;">723</div>
+        <div class="stat-lbl">projects added in month 1 — the most ever in a single month</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="font-size:36px;">38%</div>
+        <div class="stat-lbl">of month-1 projects added as an opportunity type</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="font-size:36px;">5%</div>
+        <div class="stat-lbl">reduction in allocation conflicts — hypothesis validated</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" style="font-size:36px;">117%</div>
+        <div class="stat-lbl">increase in new users in the week pursuits launched</div>
+      </div>
+    </div>
+    <p class="small" style="max-width:640px;">Also saw a spike in preconstruction, marketing, and BD users — a signal these personas were previously underserved by Bench entirely.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     22 · PURSUIT — CHARTS
+═══════════════════════════════════ -->
+<div class="slide slide-v" data-sec="Pursuit Tracking" style="background:#07070F;">
+  <div class="inner">
+    <div class="eyebrow">Post-Launch Data</div>
+    <h3 style="margin-bottom:20px;">Trends held into month two</h3>
+    <div class="img2">
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/Results.png"
+               onerror="this.parentElement.style.height='200px'">
+        </div>
+        <div class="cap">Project adds — month 1 &amp; 2 after launch</div>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="../Pursuit%20Tracking%20%E2%80%94%20Arjun_files/Users%2BAdded.png"
+               onerror="this.parentElement.style.height='200px'">
+        </div>
+        <div class="cap">New users added — spike at launch week</div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:18px; max-width:600px;">Month 2: 829 projects added, 45% as opportunities. Trend continued — but more research was needed to understand the long-term potential of pursuits.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     23 · CLOSING
+═══════════════════════════════════ -->
+<div class="slide slide-v cover-bg" data-sec="">
+  <div style="text-align:center; max-width:640px; padding:48px;">
+    <div class="eyebrow" style="margin-bottom:20px;">Why Stripe</div>
+    <h2 style="margin-bottom:24px; font-size:36px;">Payments are where complexity meets trust at scale</h2>
+    <p style="font-size:16px; max-width:500px; margin:0 auto 32px;">Both these projects were about making complex financial flows feel simple and trustworthy. That's the problem I want to work on — and Stripe's payments team is where it's most consequential.</p>
+    <div class="tags" style="justify-content:center;">
+      <span class="tag">Complexity → Simplicity</span>
+      <span class="tag">Trust in financial products</span>
+      <span class="tag">Data-driven design</span>
+      <span class="tag">Cross-functional craft</span>
+    </div>
+    <p class="small" style="margin-top:36px; font-size:13px;">Questions?</p>
+  </div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <span id="counter">1 / 23</span>
+  <button onclick="go(-1)">←</button>
+  <button onclick="go(1)">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const bar     = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  const section = document.getElementById('section');
+  let cur = 0;
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, slides.length - 1));
+    slides[cur].classList.add('active');
+    bar.style.width     = ((cur + 1) / slides.length * 100) + '%';
+    counter.textContent = (cur + 1) + ' / ' + slides.length;
+    section.textContent = slides[cur].dataset.sec || '';
+  }
+
+  function go(d) { show(cur + d); }
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); go(1); }
+    if (['ArrowLeft','ArrowUp'].includes(e.key))        { e.preventDefault(); go(-1); }
+  });
+
+  show(0);
+</script>
+</body>
+</html>
