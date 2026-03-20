@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Yahoo Fantasy — Sit/Start</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --purple: #7d2eff;
+      --purple-light: #9b4fff;
+      --bg: #f2f4f8;
+      --card: #fff;
+      --border: rgba(0,0,0,0.08);
+      --text: #24272e;
+      --dim: #61697c;
+      --green: #007a10;
+      --red: #c11629;
+      --blue-badge: #0b3ac4;
+    }
+
+    html, body { height: 100%; background: var(--bg); font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    .status-bar {
+      background: #fff; max-width: 430px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px 6px; font-size: 13px; font-weight: 700;
+    }
+
+    .header {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      max-width: 430px; margin: 0 auto;
+      position: sticky; top: 0; z-index: 100;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 16px 8px; height: 54px; position: relative;
+    }
+    .header-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, #7d2eff, #5b0dcc);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 900; color: #fff; flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(125,46,255,0.3); overflow: hidden;
+    }
+    .header-logo {
+      position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex; align-items: center; gap: 2px; pointer-events: none;
+    }
+    .logo-mark { font-size: 20px; font-weight: 900; color: var(--purple); letter-spacing: -0.5px; }
+    .logo-slash { color: #c0c8d8; font-weight: 300; font-size: 18px; }
+    .logo-word { font-size: 20px; font-weight: 900; color: var(--purple); letter-spacing: -0.3px; }
+    .play-btn {
+      background: rgba(125, 46, 255, 0.88);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      color: #fff; border: none; padding: 10px 20px;
+      border-radius: 999px; font-size: 16px; font-weight: 700;
+      cursor: pointer; flex-shrink: 0;
+      box-shadow: 0 1px 8px rgba(125,46,255,0.35), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .nav-tabs {
+      display: flex; gap: 4px; padding: 0 16px 0;
+      overflow-x: auto; scrollbar-width: none;
+      border-top: 1px solid var(--border);
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      font-size: 13px; font-weight: 600; color: #9CA3AF;
+      padding: 10px 8px; white-space: nowrap; cursor: pointer;
+      border-bottom: 2px solid transparent; transition: color 0.15s;
+    }
+    .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+    .feed {
+      max-width: 430px; margin: 0 auto;
+      overflow-y: auto; height: calc(100dvh - 122px);
+      padding-bottom: 80px;
+    }
+
+    .promo-row {
+      display: flex; gap: 8px; padding: 12px 12px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .promo-row::-webkit-scrollbar { display: none; }
+    .promo-card {
+      flex-shrink: 0; width: 221px; height: 74px; border-radius: 12px;
+      overflow: hidden; position: relative;
+      box-shadow: 0 1px 4px 2px rgba(0,8,21,0.05);
+    }
+    .promo-card-overlay {
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    }
+    .promo-card-asset {
+      position: absolute; z-index: 0; pointer-events: none; object-fit: contain;
+    }
+    .promo-card-content {
+      position: absolute; inset: 0; z-index: 2;
+      padding: 10px 12px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .promo-title { font-size: 18px; font-weight: 700; color: #fff; line-height: 1.1; white-space: nowrap; }
+    .promo-sub { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.88); line-height: 1.2; width: 118px; }
+    .promo-btn {
+      background: #fff; color: #24272e; border: none;
+      height: 28px; padding: 0 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      align-self: flex-start; font-family: inherit; white-space: nowrap;
+    }
+
+    .section-hdr {
+      padding: 12px 14px 6px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-title { font-size: 17px; font-weight: 800; color: var(--text); }
+    .optimize-btn {
+      background: linear-gradient(135deg, #d946ef, var(--purple));
+      color: #fff; border: none; padding: 7px 14px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .section-link { font-size: 13px; font-weight: 600; color: var(--purple); }
+
+    .my-teams-card {
+      margin: 0 14px 4px; background: var(--card);
+      border-radius: 14px; border: 1px solid rgba(0,0,0,0.07);
+      overflow: hidden; box-shadow: 0 1px 4px rgba(0,8,21,0.06);
+    }
+    .mt-league-row { padding: 10px 14px 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(0,0,0,0.07); }
+    .mt-league-icon { font-size: 15px; }
+    .mt-league-name { font-size: 11px; font-weight: 600; color: var(--dim); }
+    .mt-main { padding: 10px 14px 4px; display: flex; align-items: flex-start; justify-content: space-between; }
+    .mt-side { display: flex; flex-direction: column; gap: 4px; }
+    .mt-side.right { align-items: flex-end; }
+    .mt-team-name { font-size: 10px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.3px; }
+    .mt-score-row { display: flex; align-items: center; gap: 8px; }
+    .mt-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--purple-light)); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(125,46,255,0.2); }
+    .mt-score { font-size: 36px; font-weight: 900; color: var(--text); letter-spacing: -1px; line-height: 1; }
+    .mt-score.leading { color: var(--purple); }
+    .mt-score-sub { font-size: 11px; font-weight: 600; color: var(--dim); display: flex; align-items: center; gap: 3px; }
+    .mt-score-arrow { font-size: 10px; }
+    .mt-vs { font-size: 11px; font-weight: 600; color: var(--dim); align-self: center; }
+    .mt-bar-row { padding: 8px 14px 2px; }
+    .mt-bar { height: 6px; border-radius: 999px; background: #e8ecf4; overflow: hidden; }
+    .mt-bar-fill { height: 100%; border-radius: 999px; background: var(--red); }
+    .mt-pcts { display: flex; justify-content: space-between; padding: 3px 0 6px; }
+    .mt-pct { font-size: 10px; font-weight: 700; color: var(--dim); }
+    .mt-pct.green { color: var(--green); }
+    .mt-tabs { display: flex; border-top: 1px solid rgba(0,0,0,0.07); }
+    .mt-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 12px; font-weight: 700; color: var(--dim); cursor: pointer; }
+    .mt-tab.active { color: var(--purple); border-bottom: 2px solid var(--purple); }
+
+    /* ══ POLL MODULE ══ */
+    .poll-module {
+      margin: 8px 14px;
+      background: #eef2fb;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 1px 4px 2px rgba(0,8,21,0.05);
+    }
+    .poll-hdr {
+      background: #fff; padding: 12px 12px 8px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      border-radius: 12px 12px 0 0;
+    }
+    .poll-hdr-left { display: flex; align-items: center; gap: 6px; }
+    .poll-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .add-poll-btn {
+      background: linear-gradient(161deg, #e24d9c 0%, #7d2eff 100%);
+      color: #fff; border: none; padding: 7px 14px 7px 10px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 5px; line-height: 1;
+    }
+    .add-poll-icon { font-size: 10px; font-weight: 900; }
+
+    /* Card stack */
+    .stack-wrap {
+      position: relative; height: 290px;
+      margin: 8px 10px 0; overflow: hidden;
+    }
+
+    .swipe-card {
+      position: absolute; top: 0; width: 100%;
+      border-radius: 8px; overflow: hidden;
+      cursor: grab; will-change: transform;
+      box-shadow: 0 0 1px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .swipe-card:active { cursor: grabbing; }
+    .swipe-card.back-1 { transform: translateY(12px); z-index: 1; pointer-events: none; transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); }
+    .swipe-card.back-2 { transform: translateY(22px); z-index: 0; pointer-events: none; transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); }
+    .swipe-card.front  { z-index: 5; }
+    .swipe-card.fly-out { transition: transform 0.42s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease; pointer-events: none; }
+
+    /* Card asker strip */
+    .card-asker-strip { background: #fff; height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
+    .card-asker-info { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+    .card-asker-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; flex-shrink: 0; background: #fff; overflow: hidden; }
+    .card-asker-avatar-inner { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; }
+    .card-asker-labels { display: flex; flex-direction: column; }
+    .card-asker-name { font-size: 13px; font-weight: 800; color: #000; line-height: 1.2; }
+    .card-asker-meta { font-size: 12px; font-weight: 500; color: #252932; display: flex; align-items: center; gap: 3px; }
+    .card-progress-ring { position: relative; width: 28px; height: 28px; flex-shrink: 0; }
+    .card-progress-ring svg { position: absolute; top: 0; left: 0; }
+    .ring-num { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: 800; color: #252932; line-height: 1; }
+
+    /* Card body */
+    .card-body { display: flex; height: 182px; position: relative; background: #fff; overflow: hidden; }
+    .player-half { flex: 1; position: relative; overflow: hidden; }
+    .half-bg { position: absolute; inset: 0; z-index: 0; }
+    .half-logo { position: absolute; z-index: 2; pointer-events: none; width: 75px; height: 75px; object-fit: contain; opacity: 0.5; bottom: 0; }
+    .lh .half-logo { left: 8px; }
+    .rh .half-logo { right: 8px; }
+    .p-photo { position: absolute; bottom: 0; width: 115px; height: 152px; object-fit: cover; object-position: top center; filter: drop-shadow(0 2px 10px rgba(0,0,0,0.45)); z-index: 3; transform-origin: bottom center; transition: transform 0.12s ease-out; }
+    .lh .p-photo { right: 0; }
+    .rh .p-photo { left: 0; }
+    .p-info { position: absolute; top: 0; z-index: 4; padding: 8px 8px 0; max-width: 62%; }
+    .lh .p-info { left: 0; text-align: left; }
+    .rh .p-info { right: 0; text-align: right; }
+    .p-name { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.1; white-space: nowrap; }
+    .p-pos-row { display: flex; align-items: center; gap: 3px; margin-top: 4px; }
+    .lh .p-pos-row { justify-content: flex-start; }
+    .rh .p-pos-row { justify-content: flex-end; }
+    .pos-chip { background: var(--blue-badge); color: #fff; padding: 1px 5px; border-radius: 2px; font-size: 10px; font-weight: 700; height: 14px; display: flex; align-items: center; }
+    .status-badge { padding: 1px 4px; border-radius: 2px; font-size: 10px; font-weight: 700; height: 14px; display: flex; align-items: center; }
+    .status-badge.gtd { background: #fff2f4; color: #c11629; border: 0.4px solid #ffd4da; }
+    .status-badge.q   { background: #fffbeb; color: #b45309; border: 0.4px solid #fde68a; }
+    .status-badge.out { background: #fff2f4; color: #c11629; border: 0.4px solid #ffd4da; }
+    .team-matchup { font-size: 10px; color: rgba(255,255,255,0.85); font-weight: 600; display: flex; align-items: center; gap: 3px; margin-top: 5px; white-space: nowrap; overflow: hidden; }
+    .lh .team-matchup { justify-content: flex-start; }
+    .rh .team-matchup { justify-content: flex-end; }
+    .matchup-logo { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+    .def-rank-inline { font-weight: 700; }
+    .p-ou { font-size: 10px; font-weight: 600; color: #b5bed3; margin-top: 2px; }
+    .p-proj { margin-top: 5px; display: flex; align-items: baseline; gap: 2px; }
+    .lh .p-proj { justify-content: flex-start; }
+    .rh .p-proj { justify-content: flex-end; }
+    .proj-num { font-size: 16px; font-weight: 700; color: #fff; line-height: 1; }
+    .proj-sub { font-size: 10px; color: #b5bed3; font-weight: 600; }
+
+    /* OR circle + pulse ring */
+    .or-circle {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #fff; border: 1px solid #dee4f3;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 800; color: #252932;
+      z-index: 20; pointer-events: none; transition: opacity 0.15s ease;
+      padding-bottom: 1px;
+    }
+    .or-circle::after {
+      content: ''; position: absolute; inset: -5px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.18);
+      animation: orPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes orPulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50%       { opacity: 0; transform: scale(1.5); }
+    }
+
+    /* ── SWIPE HINT OVERLAY (dark pill, first card only) ── */
+    .swipe-hint-overlay {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 25; pointer-events: none;
+      background: rgba(0,0,0,0.58);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      border-radius: 28px;
+      padding: 9px 20px;
+      display: flex; align-items: center; gap: 10px;
+      opacity: 1;
+      transition: opacity 0.28s ease;
+      white-space: nowrap;
+    }
+    .swipe-hint-overlay.gone { opacity: 0; }
+    .hint-label { font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.3px; }
+    .hint-finger-l { font-size: 16px; display: inline-block; animation: nudgeLeft  1.5s ease-in-out infinite; }
+    .hint-finger-r { font-size: 16px; display: inline-block; animation: nudgeRight 1.5s ease-in-out infinite; }
+    @keyframes nudgeLeft  { 0%,100% { transform: translateX(0); } 45% { transform: translateX(-7px); } }
+    @keyframes nudgeRight { 0%,100% { transform: translateX(0); } 45% { transform: translateX(7px);  } }
+
+    /* Expand overlay */
+    .expand-overlay { position: absolute; inset: 0; opacity: 0; pointer-events: none; z-index: 15; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+    .exp-bg { position: absolute; inset: 0; }
+    .exp-logo { position: absolute; width: 140px; height: 140px; object-fit: contain; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.26; filter: brightness(1.4) saturate(0.7); pointer-events: none; }
+    .exp-photo { position: absolute; bottom: 0; width: 220px; height: 182px; object-fit: cover; object-position: top center; transform: scale(0.82); transform-origin: bottom center; filter: drop-shadow(0 -2px 18px rgba(0,0,0,0.45)); z-index: 2; }
+
+    /* Chin bar */
+    .card-btm { background: #fff; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
+    .swipe-hint-left, .swipe-hint-right { display: flex; align-items: center; gap: 2px; font-size: 10px; font-weight: 500; color: #61697c; flex: 1; cursor: pointer; }
+    .swipe-hint-left { justify-content: flex-start; }
+    .swipe-hint-right { justify-content: flex-end; }
+    .chin-chevron { font-size: 11px; color: #61697c; line-height: 1; }
+    .vote-center { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #252932; flex: 1; justify-content: center; }
+    .vote-num { transition: transform 0.12s ease, color 0.12s ease; display: inline-block; }
+    .vote-num.bump { transform: scale(1.15); color: var(--purple); }
+
+    /* Poll below — fixed height, never jumps */
+    .poll-below { height: 96px; flex-shrink: 0; position: relative; }
+    .swipe-hint-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--dim); transition: opacity 0.3s ease; pointer-events: none; }
+    .swipe-hint-text.hidden { opacity: 0; }
+
+    /* Result bar */
+    .result-bar-wrap { position: absolute; inset: 0; opacity: 0; transition: opacity 0.4s ease; pointer-events: none; }
+    .result-bar-wrap.visible { opacity: 1; pointer-events: auto; }
+    .insight-inner {
+      height: 96px; display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 16px 14px; position: relative; overflow: hidden;
+      border-left: 3px solid var(--accent, #7d2eff);
+      transition: background-color 0.4s ease, border-color 0.4s ease;
+    }
+    .insight-opp-logo {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 72px; height: 72px; object-fit: contain; opacity: 0.08; pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .insight-left { display: flex; flex-direction: column; gap: 4px; z-index: 1; }
+    .insight-label { font-size: 10px; font-weight: 600; color: var(--dim); letter-spacing: 0.2px; text-transform: uppercase; line-height: 1; }
+    .insight-player-row { display: flex; align-items: center; gap: 8px; }
+    .insight-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; box-shadow: 0 0 0 2px var(--tc, #ccc); }
+    .insight-avatar img { width: 32px; height: 32px; object-fit: cover; object-position: top center; background: #e8ecf4; }
+    .insight-name { font-size: 14px; font-weight: 800; color: var(--text); }
+    .insight-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; z-index: 1; max-width: 52%; }
+    .insight-opp-label { font-size: 10px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 0.2px; display: flex; align-items: center; gap: 4px; line-height: 1; }
+    .insight-opp-logo-sm { width: 14px; height: 14px; object-fit: contain; }
+    .insight-stat-line { font-size: 12px; font-weight: 500; color: var(--dim); text-align: right; line-height: 1.3; }
+    .insight-stat-line strong { font-size: 14px; font-weight: 900; }
+    .insight-rank-pill { font-size: 10px; font-weight: 800; border-radius: 20px; padding: 3px 8px; }
+
+    /* Done screen */
+    .done-card { background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.06); height: 290px; display: flex; flex-direction: column; }
+    .done-picks { padding: 10px 12px 6px; border-bottom: 1px solid rgba(0,0,0,0.07); flex: 1; overflow: hidden; }
+    .done-picks-label { font-size: 12px; font-weight: 700; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .done-chips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .done-chip { display: flex; align-items: center; gap: 6px; background: #f2f4f8; border: 1px solid rgba(0,0,0,0.07); border-radius: 8px; padding: 5px 8px 5px 6px; opacity: 0; transform: translateY(10px); animation: chipIn 0.36s ease both; }
+    @keyframes chipIn { to { opacity: 1; transform: translateY(0); } }
+    .done-chip-photo-wrap { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; overflow: hidden; box-shadow: 0 0 0 2px var(--tc, var(--purple)); }
+    .done-chip-photo { width: 28px; height: 28px; object-fit: cover; object-position: top center; background: #e8ecf4; }
+    .done-chip-name { font-size: 11px; font-weight: 700; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .done-chip-check { width: 16px; height: 16px; border-radius: 50%; background: #16A34A; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; flex-shrink: 0; }
+    .done-bold-pick { margin-top: 4px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .done-bold-label { font-size: 10px; font-weight: 700; color: #B45309; }
+    .done-bold-matchup { font-size: 13px; font-weight: 900; color: var(--text); line-height: 1.2; }
+    .done-bold-matchup .bold-over { color: var(--dim); font-weight: 500; font-size: 11px; }
+    .done-bold-stat { font-size: 11px; color: var(--dim); margin-top: 1px; }
+    .done-chip.is-bold { border-color: #FDE68A; background: #FFFBEB; }
+    .bold-call-pill { font-size: 9px; font-weight: 800; background: #FDE68A; color: #92400E; border-radius: 4px; padding: 2px 5px; letter-spacing: 0.4px; text-transform: uppercase; flex-shrink: 0; }
+    .done-cta { width: 100%; padding: 12px 16px; background: linear-gradient(135deg, var(--purple-light), var(--purple)); color: #fff; border: none; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s; margin-top: auto; flex-shrink: 0; }
+    .done-cta:active { opacity: 0.85; }
+
+    /* ── RESULT MOMENT (between-card reveal) ── */
+    .result-moment {
+      position: absolute; inset: 0; z-index: 20;
+      border-radius: 8px; overflow: hidden;
+      display: flex; flex-direction: column;
+      opacity: 0; transition: opacity 0.24s ease;
+      box-shadow: 0 0 1px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.12);
+      cursor: pointer;
+    }
+    .result-moment.show { opacity: 1; }
+    .rm-body { flex: 1; display: flex; overflow: hidden; }
+    .rm-half {
+      flex: 1; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: flex-end; padding: 0 8px 14px; gap: 4px;
+      min-width: 96px;
+      transition: flex-grow 0.85s cubic-bezier(0.34, 1.12, 0.64, 1);
+    }
+    .rm-half-logo {
+      position: absolute; width: 64px; height: 64px; object-fit: contain;
+      opacity: 0.25; bottom: 0; pointer-events: none;
+    }
+    .rm-lh .rm-half-logo { left: 4px; }
+    .rm-rh .rm-half-logo { right: 4px; }
+    .rm-you-badge {
+      background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.5);
+      color: #fff; border-radius: 999px; padding: 3px 10px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.2px; position: relative; z-index: 2;
+    }
+    .rm-badge-spacer { height: 20px; flex-shrink: 0; }
+    .rm-photo {
+      width: 88px; height: 112px; object-fit: cover; object-position: top center;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,0.45));
+      position: relative; z-index: 2;
+    }
+    .rm-pct-big { font-size: 30px; font-weight: 900; color: #fff; line-height: 1; position: relative; z-index: 2; }
+    .rm-name-sm { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); position: relative; z-index: 2; white-space: nowrap; }
+    .rm-bar { height: 5px; display: flex; flex-shrink: 0; }
+    .rm-bar-l { flex: 1; transition: flex-grow 0.85s cubic-bezier(0.34, 1.12, 0.64, 1) 0.08s; }
+    .rm-bar-r { flex: 1; transition: flex-grow 0.85s cubic-bezier(0.34, 1.12, 0.64, 1) 0.08s; }
+    .rm-footer {
+      height: 44px; background: #fff; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 14px; flex-shrink: 0;
+    }
+    .rm-votes { font-size: 12px; font-weight: 600; color: var(--dim); }
+    .rm-sentiment { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 4px 12px; }
+    .rm-sentiment.agree { background: #DCFCE7; color: #15803D; }
+    .rm-sentiment.bold  { background: #FFFBEB; color: #B45309; }
+
+    /* Ad banner */
+    .ad-banner { margin: 4px 14px; background: var(--card); border-radius: 12px; border: 1px solid rgba(0,0,0,0.07); padding: 10px 14px; display: flex; align-items: center; gap: 12px; }
+    .ad-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; border-radius: 50%; }
+    .ad-body { flex: 1; }
+    .ad-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .ad-label { font-size: 11px; font-weight: 500; color: #9CA3AF; }
+    .ad-sub { font-size: 11px; color: var(--dim); }
+    .ad-cta { font-size: 11px; font-weight: 700; color: var(--purple); flex-shrink: 0; }
+
+    /* Live card */
+    .live-card { margin: 8px 14px 4px; background: var(--card); border-radius: 14px; border: 1px solid rgba(0,0,0,0.07); overflow: hidden; box-shadow: 0 1px 4px rgba(0,8,21,0.06); }
+    .live-hdr { padding: 10px 14px 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(0,0,0,0.07); }
+    .live-hdr-icon { font-size: 16px; }
+    .live-hdr-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+    .live-badge { background: #EF4444; color: #fff; font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.5px; }
+    .live-body { padding: 10px 14px; }
+    .live-teams-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+    .live-team { display: flex; flex-direction: column; gap: 2px; }
+    .live-team.right { align-items: flex-end; }
+    .live-team-name { font-size: 10px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.3px; }
+    .live-score { font-size: 32px; font-weight: 900; color: var(--text); letter-spacing: -1px; line-height: 1; }
+    .live-score.leading { color: var(--purple); }
+    .live-sub { font-size: 10px; font-weight: 600; color: var(--dim); }
+    .live-vs { font-size: 11px; font-weight: 600; color: var(--dim); align-self: center; margin-top: 8px; }
+    .live-bar { height: 5px; border-radius: 999px; background: rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 5px; }
+    .live-bar-fill { height: 100%; border-radius: 999px; background: var(--green); }
+    .live-pcts { display: flex; justify-content: space-between; }
+    .live-pct { font-size: 10px; font-weight: 700; color: var(--dim); }
+    .live-pct.win { color: var(--green); }
+    .live-tabs { display: flex; border-top: 1px solid rgba(0,0,0,0.07); margin-top: 2px; }
+    .live-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 12px; font-weight: 700; color: var(--dim); cursor: pointer; }
+    .live-tab.active { color: var(--purple); border-bottom: 2px solid var(--purple); }
+
+    /* Draft module */
+    .draft-card { margin: 8px 14px 4px; background: var(--card); border-radius: 14px; border: 1px solid rgba(0,0,0,0.07); overflow: hidden; box-shadow: 0 1px 4px rgba(0,8,21,0.06); }
+    .draft-hdr { padding: 10px 14px 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(0,0,0,0.07); }
+    .draft-hdr-icon { font-size: 16px; }
+    .draft-hdr-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+    .draft-body { padding: 10px 14px; }
+    .draft-team-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .draft-team-icon { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), #d946ef); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .draft-team-name { font-size: 13px; font-weight: 800; color: var(--text); }
+    .draft-status { font-size: 11px; color: var(--dim); font-weight: 500; }
+    .draft-btns { display: flex; gap: 8px; }
+    .draft-btn { flex: 1; padding: 9px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; border: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .draft-btn.primary { background: linear-gradient(161deg, #e24d9c, #7d2eff); color: #fff; }
+    .draft-btn.secondary { background: rgba(125,46,255,0.08); color: var(--purple); border: 1px solid rgba(125,46,255,0.2); }
+    .draft-btn-icon { font-size: 10px; }
+
+    /* Daily Draw */
+    .draw-card { margin: 8px 14px 4px; background: linear-gradient(135deg, #1a0a3a 0%, #0d1a40 100%); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .draw-section-label { padding: 10px 14px 0; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; text-transform: uppercase; }
+    .draw-teams-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px 4px; }
+    .draw-team { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .draw-team-logo { width: 44px; height: 44px; object-fit: contain; }
+    .draw-abbr { font-size: 12px; font-weight: 800; color: rgba(255,255,255,0.9); }
+    .draw-record { font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 600; }
+    .draw-center { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .draw-time { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 0.3px; }
+    .draw-vs { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.4); }
+    .draw-cta-row { padding: 4px 14px 12px; }
+    .draw-cta { width: 100%; padding: 11px 16px; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    /* News */
+    .news-scroll { display: flex; gap: 10px; padding: 4px 14px 10px; overflow-x: auto; scrollbar-width: none; }
+    .news-scroll::-webkit-scrollbar { display: none; }
+    .news-card-item { flex-shrink: 0; width: 132px; border-radius: 10px; overflow: hidden; background: var(--card); border: 1px solid rgba(0,0,0,0.07); }
+    .news-img { width: 132px; height: 88px; object-fit: cover; object-position: top center; background: #e5e7eb; display: block; }
+    .news-text { padding: 6px 8px 8px; }
+    .news-headline { font-size: 11px; font-weight: 700; color: var(--text); line-height: 1.35; }
+
+    /* Play Now */
+    .games-row { display: flex; gap: 10px; padding: 4px 14px 10px; overflow-x: auto; scrollbar-width: none; }
+    .games-row::-webkit-scrollbar { display: none; }
+    .game-card { flex-shrink: 0; width: 176px; border-radius: 14px; overflow: hidden; background: #0f172a; }
+    .game-card-inner { padding: 12px 14px 0; }
+    .game-sport { font-size: 40px; font-weight: 900; color: rgba(255,255,255,0.07); line-height: 1; }
+    .game-title { font-size: 16px; font-weight: 900; color: #fff; margin-top: 2px; }
+    .game-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.4; margin-top: 2px; padding-bottom: 10px; }
+    .game-cta { width: 100%; padding: 10px; background: var(--purple); color: #fff; border: none; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .game-pick-card { flex-shrink: 0; width: 176px; border-radius: 14px; overflow: hidden; background: #0f172a; }
+    .game-pick-teams { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 6px; }
+    .game-pick-team { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .game-pick-logo { width: 36px; height: 36px; object-fit: contain; }
+    .game-pick-abbr { font-size: 11px; font-weight: 800; color: #fff; }
+    .game-pick-record { font-size: 9px; color: rgba(255,255,255,0.4); font-weight: 600; }
+    .game-pick-vs { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.35); }
+    .game-pick-info { padding: 2px 14px 8px; }
+    .game-pick-time { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5); }
+    .game-pick-label { font-size: 13px; font-weight: 800; color: #fff; margin-top: 1px; }
+    .game-pick-cta { width: 100%; padding: 9px; background: var(--purple); color: #fff; border: none; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    /* Bottom nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(255,255,255,0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid rgba(0,0,0,0.08); display: flex; padding: 8px 0 16px; z-index: 200; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+    .nav-icon { font-size: 20px; }
+    .nav-lbl { font-size: 10px; font-weight: 600; color: var(--dim); }
+    .nav-item.active .nav-lbl { color: var(--purple); }
+
+    /* Onboarding sheet */
+    .ob-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+    .ob-backdrop.visible { opacity: 1; pointer-events: all; }
+    .ob-sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; background: #fff; border-radius: 20px 20px 0 0; padding: 0 24px 36px; z-index: 501; transition: transform 0.42s cubic-bezier(0.34,1.1,0.64,1); }
+    .ob-sheet.visible { transform: translateX(-50%) translateY(0); }
+    .ob-handle { width: 36px; height: 4px; background: #D1D5DB; border-radius: 2px; margin: 10px auto 0; }
+    .ob-close { position: absolute; top: 14px; right: 16px; width: 28px; height: 28px; border-radius: 50%; background: #F3F4F6; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #6B7280; font-family: inherit; }
+    .ob-demo-wrap { background: none; margin: 20px 0 22px; padding: 20px 16px; display: flex; align-items: center; justify-content: center; position: relative; height: 100px; }
+    .ob-demo-card { width: 150px; height: 72px; border-radius: 10px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.22); display: flex; }
+    .ob-demo-half { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+    .ob-demo-half.l { background: linear-gradient(160deg,#00338D,#001a5c); }
+    .ob-demo-half.r { background: linear-gradient(160deg,#8b0000,#4a0000); }
+    .ob-demo-name { font-size: 9px; font-weight: 800; color: #fff; }
+    .ob-demo-proj { font-size: 7px; color: rgba(255,255,255,0.6); }
+    .ob-demo-or { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 22px; height: 22px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; color: #111; z-index: 2; }
+    .ob-demo-hand { font-size: 28px; position: absolute; bottom: 16px; left: calc(50% - 14px); animation: obSwipe 3.6s ease-in-out infinite; }
+    @keyframes obSwipe { 0%,8%{transform:translateX(0) rotate(0deg);opacity:1} 28%{transform:translateX(54px) rotate(10deg);opacity:1} 36%{transform:translateX(60px) rotate(12deg);opacity:0} 37%{transform:translateX(0) rotate(0deg);opacity:0} 45%{transform:translateX(0) rotate(0deg);opacity:1} 65%{transform:translateX(-54px) rotate(-10deg);opacity:1} 73%{transform:translateX(-60px) rotate(-12deg);opacity:0} 74%{transform:translateX(0) rotate(0deg);opacity:0} 84%,100%{transform:translateX(0) rotate(0deg);opacity:1} }
+    .ob-title { font-size: 24px; font-weight: 900; color: var(--text); text-align: center; letter-spacing: -0.3px; margin-bottom: 8px; }
+    .ob-sub { font-size: 14px; font-weight: 500; color: var(--dim); text-align: center; line-height: 1.5; margin-bottom: 24px; }
+    .ob-cta { width: 100%; background: var(--purple); color: #fff; border: none; border-radius: 50px; padding: 16px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="status-bar"><span>9:41</span><span style="display:flex;gap:5px;align-items:center;font-size:11px;">▐▌▌ 🔋</span></div>
+
+<div class="header">
+  <div class="header-bar">
+    <div class="header-avatar">🏈</div>
+    <div class="header-logo">
+      <span class="logo-mark">yahoo</span>
+      <span class="logo-slash">/</span>
+      <span class="logo-word">fantasy</span>
+    </div>
+    <button class="play-btn">Play</button>
+  </div>
+  <div class="nav-tabs">
+    <div class="tab active">All</div>
+    <div class="tab">Basketball</div>
+    <div class="tab">Hockey</div>
+    <div class="tab">Football</div>
+    <div class="tab">Baseball</div>
+  </div>
+</div>
+
+<div class="feed">
+
+  <div class="promo-row">
+    <!-- NFL Pick'em -->
+    <div class="promo-card" style="background:#7d2eff;">
+      <img class="promo-card-asset" src="https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png"
+           style="width:96px;height:96px;right:-8px;top:-11px;opacity:0.55;transform:rotate(-8deg);">
+      <div class="promo-card-overlay" style="background:linear-gradient(93deg,#7d2eff 58%,rgba(125,46,255,0) 100%);"></div>
+      <div class="promo-card-content">
+        <div>
+          <div class="promo-title">NFL Pick'em</div>
+          <div class="promo-sub">Make your picks on Pro Football games</div>
+        </div>
+        <button class="promo-btn">Make Picks</button>
+      </div>
+    </div>
+    <!-- Guillotine -->
+    <div class="promo-card" style="background:#0d0d18;">
+      <img class="promo-card-asset" src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png"
+           style="width:108px;height:108px;right:-12px;top:-16px;object-fit:cover;object-position:top center;opacity:0.65;">
+      <div class="promo-card-overlay" style="background:linear-gradient(92deg,#0d0d18 60%,rgba(13,13,24,0) 100%);"></div>
+      <div class="promo-card-content">
+        <div>
+          <div class="promo-title">Guillotine</div>
+          <div class="promo-sub">A new way to play Fantasy Football</div>
+        </div>
+        <button class="promo-btn">Join League</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-hdr">
+    <div class="section-title">My Teams</div>
+    <button class="optimize-btn">✦ Optimize Lineups</button>
+  </div>
+  <div class="my-teams-card">
+    <div class="mt-league-row">
+      <span class="mt-league-icon">🏈</span>
+      <span class="mt-league-name">Fantasy Design + Friends</span>
+    </div>
+    <div class="mt-main">
+      <div class="mt-side">
+        <div class="mt-team-name">Fright Night Lights</div>
+        <div class="mt-score-row">
+          <div class="mt-avatar" style="background:linear-gradient(135deg,#1a1a2e,#3b1c6e);">👻</div>
+          <div>
+            <div class="mt-score">83.02</div>
+            <div class="mt-score-sub"><span class="mt-score-arrow">↓</span> 83.02 proj</div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-vs">vs</div>
+      <div class="mt-side right">
+        <div class="mt-team-name">B's Brilliant Team</div>
+        <div class="mt-score-row">
+          <div>
+            <div class="mt-score leading" style="text-align:right;">101.91</div>
+            <div class="mt-score-sub" style="justify-content:flex-end;"><span class="mt-score-arrow">↑</span> 101.91 proj</div>
+          </div>
+          <div class="mt-avatar" style="background:linear-gradient(135deg,#064e3b,#065f46);">🧙</div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-bar-row">
+      <div class="mt-bar"><div class="mt-bar-fill" style="width:31%"></div></div>
+      <div class="mt-pcts"><span class="mt-pct" style="color:var(--red)">31%</span><span class="mt-pct" style="color:var(--green)">69%</span></div>
+    </div>
+    <div class="mt-tabs">
+      <div class="mt-tab active">My Team</div>
+      <div class="mt-tab">Matchup</div>
+    </div>
+  </div>
+
+  <!-- ══ COMMUNITY POLL (SWIPE MODULE) ══ -->
+  <div class="poll-module">
+    <div class="poll-hdr">
+      <div class="poll-hdr-left">
+        <span class="poll-title">Who should start?</span>
+      </div>
+      <button class="add-poll-btn">
+        <span class="add-poll-icon">Y+</span>
+        Ask yours
+      </button>
+    </div>
+    <div class="stack-wrap" id="stackWrap"></div>
+  </div>
+  <!-- ══ END COMMUNITY POLL ══ -->
+
+  <div class="ad-banner">
+    <img class="ad-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="BUF">
+    <div class="ad-body">
+      <div class="ad-title">Get your favorite player's jersey!</div>
+      <div class="ad-label">Ad · Fanatics</div>
+    </div>
+    <div class="ad-cta">Shop →</div>
+  </div>
+
+  <div class="live-card">
+    <div class="live-hdr">
+      <span class="live-hdr-icon">🏈</span>
+      <span class="live-hdr-title">Y! Sport Friendly</span>
+      <span class="live-badge">LIVE</span>
+    </div>
+    <div class="live-body">
+      <div class="live-teams-row">
+        <div class="live-team">
+          <div class="live-team-name">Ghoul Tending</div>
+          <div class="live-score leading">252.30</div>
+          <div class="live-sub">989.63 (Season Proj)</div>
+        </div>
+        <div class="live-vs">vs</div>
+        <div class="live-team right">
+          <div class="live-team-name">MASTERPEACE</div>
+          <div class="live-score">234.00</div>
+          <div class="live-sub">803.74 (Season Proj)</div>
+        </div>
+      </div>
+      <div class="live-bar"><div class="live-bar-fill" style="width:54%"></div></div>
+      <div class="live-pcts">
+        <span class="live-pct win">54% win chance</span>
+        <span class="live-pct">46%</span>
+      </div>
+    </div>
+    <div class="live-tabs">
+      <div class="live-tab active">My Team</div>
+      <div class="live-tab">Matchup</div>
+    </div>
+  </div>
+
+  <div class="draft-card">
+    <div class="draft-hdr">
+      <span class="draft-hdr-icon">🎯</span>
+      <span class="draft-hdr-title">Dribbble Designs</span>
+    </div>
+    <div class="draft-body">
+      <div class="draft-team-row">
+        <div class="draft-team-icon">👻</div>
+        <div>
+          <div class="draft-team-name">FRIGHT NIGHT LIGHTS</div>
+          <div class="draft-status">Offline Draft</div>
+        </div>
+      </div>
+      <div class="draft-btns">
+        <button class="draft-btn primary"><span class="draft-btn-icon">Y+</span> Instant Mock Draft</button>
+        <button class="draft-btn secondary"><span class="draft-btn-icon">Y+</span> My Draft Kit</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-hdr"><div class="section-title">Daily Draw</div><div class="section-link">View All</div></div>
+  <div class="draw-card">
+    <div class="draw-section-label">NFL · SUN · WEEK 14</div>
+    <div class="draw-teams-row">
+      <div class="draw-team">
+        <img class="draw-team-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/nyj.png" alt="NYJ">
+        <div class="draw-abbr">NYJ</div>
+        <div class="draw-record">(9-4)</div>
+      </div>
+      <div class="draw-center">
+        <div class="draw-time">SUN 1:15 pm</div>
+        <div class="draw-vs">vs</div>
+      </div>
+      <div class="draw-team">
+        <img class="draw-team-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/hou.png" alt="HOU">
+        <div class="draw-abbr">HOU</div>
+        <div class="draw-record">(6-7)</div>
+      </div>
+    </div>
+    <div class="draw-cta-row">
+      <button class="draw-cta">Slide to Open →</button>
+    </div>
+  </div>
+
+  <div class="section-hdr"><div class="section-title">Top Fantasy News</div><div class="section-link">View All ›</div></div>
+  <div class="news-scroll">
+    <div class="news-card-item">
+      <img class="news-img" src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" alt="">
+      <div class="news-text"><div class="news-headline">6 Fantasy Football Superstars for 2026 Draft Boards</div></div>
+    </div>
+    <div class="news-card-item">
+      <img class="news-img" src="https://a.espncdn.com/i/headshots/nfl/players/full/3139477.png" alt="">
+      <div class="news-text"><div class="news-headline">Insights from NFL playoffs for 2026 Fantasy</div></div>
+    </div>
+    <div class="news-card-item">
+      <img class="news-img" src="https://a.espncdn.com/i/headshots/nfl/players/full/3929630.png" alt="">
+      <div class="news-text"><div class="news-headline">Pickups and start advice for Week 1</div></div>
+    </div>
+    <div class="news-card-item">
+      <img class="news-img" src="https://a.espncdn.com/i/headshots/nfl/players/full/4241389.png" alt="">
+      <div class="news-text"><div class="news-headline">WR rankings — who to start this week</div></div>
+    </div>
+  </div>
+
+  <div class="section-hdr"><div class="section-title">Play Now</div><div class="section-link">View All Games ›</div></div>
+  <div class="games-row">
+    <div class="game-card">
+      <div class="game-card-inner">
+        <div class="game-sport">NBA</div>
+        <div class="game-title">High Score</div>
+        <div class="game-sub">A new way to play Fantasy Basketball</div>
+      </div>
+      <button class="game-cta">Play Now</button>
+    </div>
+    <div class="game-pick-card">
+      <div class="game-pick-teams">
+        <div class="game-pick-team">
+          <img class="game-pick-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/nyj.png" alt="NYJ">
+          <div class="game-pick-abbr">NYJ</div>
+          <div class="game-pick-record">9–4</div>
+        </div>
+        <div class="game-pick-vs">vs</div>
+        <div class="game-pick-team">
+          <img class="game-pick-logo" src="https://a.espncdn.com/i/teamlogos/nfl/500/hou.png" alt="HOU">
+          <div class="game-pick-abbr">HOU</div>
+          <div class="game-pick-record">6–7</div>
+        </div>
+      </div>
+      <div class="game-pick-info">
+        <div class="game-pick-time">SUN · 1:15 PM</div>
+        <div class="game-pick-label">Pick'em</div>
+      </div>
+      <button class="game-pick-cta">Make Your Pick</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="ob-backdrop" id="obBackdrop"></div>
+<div class="ob-sheet" id="obSheet">
+  <div class="ob-handle"></div>
+  <button class="ob-close" id="obClose">✕</button>
+  <div class="ob-demo-wrap">
+    <div class="ob-demo-card">
+      <div class="ob-demo-half l"><div class="ob-demo-name">J. Allen</div><div class="ob-demo-proj">17.4 proj</div></div>
+      <div class="ob-demo-half r"><div class="ob-demo-name">Mahomes</div><div class="ob-demo-proj">19.4 proj</div></div>
+      <div class="ob-demo-or">or</div>
+    </div>
+    <div class="ob-demo-hand">👆</div>
+  </div>
+  <div class="ob-title">Who should start?</div>
+  <div class="ob-sub">Vote on tough calls from around your league. Find out if you're with the crowd — or going bold.</div>
+  <button class="ob-cta" id="obCta">Let's vote</button>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item active"><div class="nav-icon">🏠</div><div class="nav-lbl">Home</div></div>
+  <div class="nav-item"><div class="nav-icon">🎮</div><div class="nav-lbl">Games</div></div>
+  <div class="nav-item"><div class="nav-icon">📰</div><div class="nav-lbl">News</div></div>
+  <div class="nav-item"><div class="nav-icon">🏆</div><div class="nav-lbl">Scores</div></div>
+</div>
+
+<script>
+const CARD_POOL = [
+  { id:1, week:"Week 12", context:"QB", asker:"Michelle",
+    left:  { name:"Josh",    last:"Allen",   pos:"QB", team:"BUF", espnId:3918298, color:"#00338D", logo:"buf", proj:17.41, opp:"@ PIT", defRank:8,  ou:47.5, emoji:"🦬", status:"GTD" },
+    right: { name:"Patrick", last:"Mahomes", pos:"QB", team:"KC",  espnId:3139477, color:"#E31837", logo:"kc",  proj:19.45, opp:"@ DEN", defRank:1,  ou:24.5, emoji:"⚡", status:"GTD" },
+    lPct:57, baseVotes:430 },
+  { id:2, week:"Week 12", context:"WR", asker:"Jake",
+    left:  { name:"DJ",      last:"Moore",   pos:"WR", team:"CHI", espnId:3915416, color:"#0B162A", logo:"chi", proj:14.2, opp:"vs GB",  defRank:5,  ou:47.5, emoji:"🐻", status:null },
+    right: { name:"Saquon",  last:"Barkley", pos:"RB", team:"PHI", espnId:3929630, color:"#004C54", logo:"phi", proj:22.3, opp:"@ TB",   defRank:19, ou:44.0, emoji:"🦅", status:null },
+    lPct:38, baseVotes:3441 },
+  { id:3, week:"Week 12", context:"RB", asker:"Sarah",
+    left:  { name:"Derrick", last:"Henry",   pos:"RB", team:"BAL", espnId:3043078, color:"#241773", logo:"bal", proj:18.7, opp:"vs CLE", defRank:28, ou:51.0, emoji:"🐎", status:null },
+    right: { name:"Tony",    last:"Pollard", pos:"RB", team:"TEN", espnId:3916148, color:"#4B92DB", logo:"ten", proj:12.1, opp:"@ HOU", defRank:14, ou:41.5, emoji:"🔵", status:"Q"  },
+    lPct:65, baseVotes:1102 },
+  { id:4, week:"Week 12", context:"TE", asker:"Chris",
+    left:  { name:"Travis", last:"Kelce",   pos:"TE", team:"KC",  espnId:15847,   color:"#E31837", logo:"kc",  proj:14.5, opp:"@ DET", defRank:8,  ou:52.0, emoji:"👑", status:null },
+    right: { name:"Sam",    last:"LaPorta", pos:"TE", team:"DET", espnId:4430027, color:"#0076B6", logo:"det", proj:11.2, opp:"vs GB", defRank:21, ou:43.5, emoji:"🦁", status:null },
+    lPct:60, baseVotes:62016 },
+  { id:5, week:"Week 12", context:"WR", asker:"Alex",
+    left:  { name:"Tyreek", last:"Hill", pos:"WR", team:"MIA", espnId:3116406, color:"#008E97", logo:"mia", proj:17.2, opp:"@ BUF", defRank:4,  ou:49.5, emoji:"🐬", status:"GTD" },
+    right: { name:"CeeDee", last:"Lamb", pos:"WR", team:"DAL", espnId:4241389, color:"#003594", logo:"dal", proj:19.8, opp:"vs PHI", defRank:17, ou:46.0, emoji:"⭐", status:null  },
+    lPct:39, baseVotes:1872 },
+  { id:6, week:"Week 12", context:"QB", asker:"Taylor",
+    left:  { name:"Lamar", last:"Jackson",  pos:"QB", team:"BAL", espnId:3916387, color:"#241773", logo:"bal", proj:24.1, opp:"vs CLE", defRank:30, ou:51.0, emoji:"👑", status:null  },
+    right: { name:"Dak",   last:"Prescott", pos:"QB", team:"DAL", espnId:2577417, color:"#003594", logo:"dal", proj:21.8, opp:"vs PHI", defRank:17, ou:46.0, emoji:"⭐", status:"OUT" },
+    lPct:58, baseVotes:2310 },
+  { id:7, week:"Week 12", context:"WR", asker:"Jordan",
+    left:  { name:"Davante", last:"Adams",  pos:"WR", team:"NYJ", espnId:16800,   color:"#125740", logo:"nyj", proj:13.1, opp:"vs NE",  defRank:22, ou:40.5, emoji:"✈️", status:null },
+    right: { name:"Jaylen",  last:"Waddle", pos:"WR", team:"MIA", espnId:4372016, color:"#008E97", logo:"mia", proj:14.9, opp:"@ BUF", defRank:4,  ou:49.5, emoji:"🔥", status:null },
+    lPct:46, baseVotes:1203 },
+  { id:8, week:"Week 12", context:"RB", asker:"Casey",
+    left:  { name:"Joe",   last:"Mixon",  pos:"RB", team:"HOU", espnId:3116385, color:"#03202F", logo:"hou", proj:16.2, opp:"vs TEN", defRank:25, ou:41.5, emoji:"🚀", status:null },
+    right: { name:"Amari", last:"Cooper", pos:"WR", team:"CLE", espnId:2976499, color:"#FF3C00", logo:"cle", proj:11.8, opp:"@ BAL",  defRank:2,  ou:44.0, emoji:"🔶", status:null },
+    lPct:62, baseVotes:744 },
+  { id:9, week:"Week 12", context:"RB", asker:"Marcus",
+    left:  { name:"Saquon", last:"Barkley", pos:"RB", team:"PHI", espnId:3929630, color:"#004C54", logo:"phi", proj:22.3, opp:"@ TB",   defRank:19, ou:44.0, status:null },
+    right: { name:"Joe",    last:"Mixon",   pos:"RB", team:"HOU", espnId:3116385, color:"#03202F", logo:"hou", proj:16.2, opp:"vs TEN", defRank:25, ou:41.5, status:null },
+    lPct:68, baseVotes:5230 },
+  { id:10, week:"Week 12", context:"WR", asker:"Nina",
+    left:  { name:"CeeDee", last:"Lamb",  pos:"WR", team:"DAL", espnId:4241389, color:"#003594", logo:"dal", proj:19.8, opp:"vs PHI", defRank:17, ou:46.0, status:null },
+    right: { name:"DJ",     last:"Moore", pos:"WR", team:"CHI", espnId:3915416, color:"#0B162A", logo:"chi", proj:14.2, opp:"vs GB",  defRank:5,  ou:47.5, status:null },
+    lPct:72, baseVotes:3108 },
+  { id:11, week:"Week 12", context:"WR", asker:"Priya",
+    left:  { name:"Tyreek", last:"Hill",   pos:"WR", team:"MIA", espnId:3116406, color:"#008E97", logo:"mia", proj:17.2, opp:"@ BUF", defRank:4,  ou:49.5, status:"GTD" },
+    right: { name:"Davante",last:"Adams",  pos:"WR", team:"NYJ", espnId:16800,   color:"#125740", logo:"nyj", proj:13.1, opp:"vs NE",  defRank:22, ou:40.5, status:null },
+    lPct:61, baseVotes:4420 },
+  { id:12, week:"Week 12", context:"QB", asker:"Derek",
+    left:  { name:"Josh",    last:"Allen",    pos:"QB", team:"BUF", espnId:3918298, color:"#00338D", logo:"buf", proj:24.8, opp:"vs MIA", defRank:4,  ou:49.5, status:null },
+    right: { name:"Lamar",   last:"Jackson",  pos:"QB", team:"BAL", espnId:3916387, color:"#241773", logo:"bal", proj:24.1, opp:"vs CLE", defRank:30, ou:51.0, status:null },
+    lPct:48, baseVotes:9870 },
+  { id:13, week:"Week 12", context:"RB", asker:"Simone",
+    left:  { name:"Derrick", last:"Henry",   pos:"RB", team:"BAL", espnId:3043078, color:"#241773", logo:"bal", proj:18.7, opp:"vs CLE", defRank:28, ou:51.0, status:null },
+    right: { name:"Saquon",  last:"Barkley", pos:"RB", team:"PHI", espnId:3929630, color:"#004C54", logo:"phi", proj:22.3, opp:"@ TB",   defRank:19, ou:44.0, status:null },
+    lPct:44, baseVotes:6614 },
+  { id:14, week:"Week 12", context:"QB", asker:"Tom",
+    left:  { name:"Patrick", last:"Mahomes", pos:"QB", team:"KC",  espnId:3139477, color:"#E31837", logo:"kc",  proj:22.1, opp:"vs LV",  defRank:27, ou:48.0, status:null },
+    right: { name:"Dak",     last:"Prescott",pos:"QB", team:"DAL", espnId:2577417, color:"#003594", logo:"dal", proj:21.8, opp:"vs PHI", defRank:17, ou:46.0, status:"OUT" },
+    lPct:81, baseVotes:7203 },
+  { id:15, week:"Week 12", context:"WR", asker:"Bria",
+    left:  { name:"Jaylen", last:"Waddle", pos:"WR", team:"MIA", espnId:4372016, color:"#008E97", logo:"mia", proj:14.9, opp:"@ BUF", defRank:4,  ou:49.5, status:null },
+    right: { name:"Amari",  last:"Cooper", pos:"WR", team:"CLE", espnId:2976499, color:"#FF3C00", logo:"cle", proj:11.8, opp:"@ BAL",  defRank:2,  ou:44.0, status:null },
+    lPct:55, baseVotes:1988 },
+  { id:16, week:"Week 12", context:"TE", asker:"Raj",
+    left:  { name:"Travis", last:"Kelce",   pos:"TE", team:"KC",  espnId:15847,   color:"#E31837", logo:"kc",  proj:14.5, opp:"vs LV",  defRank:27, ou:48.0, status:null },
+    right: { name:"Sam",    last:"LaPorta", pos:"TE", team:"DET", espnId:4430027, color:"#0076B6", logo:"det", proj:11.2, opp:"@ CHI", defRank:31, ou:49.5, status:null },
+    lPct:76, baseVotes:41200 }
+];
+
+const PAGE_SIZE = 6;
+let pageStart = 0;
+let PLAYERS = CARD_POOL.slice(0, PAGE_SIZE);
+let idx = 0, decisions = [], totalDecisions = 0;
+let isDragging = false, startX = 0, startY = 0, curX = 0, velX = 0, lastX = 0, lockAxis = null;
+let frontCard = null, liveVoteInterval = null, currentVotes = 0;
+let lastResult = null;
+let hintShown = false; // swipe hint overlay only shows on the very first card
+
+const espnHeadshot = id   => `https://a.espncdn.com/i/headshots/nfl/players/full/${id}.png`;
+const espnLogo     = abbr => `https://a.espncdn.com/i/teamlogos/nfl/500/${abbr.toLowerCase()}.png`;
+function abbr(p) { return `${p.name[0]}. ${p.last}`; }
+
+function darken(hex, f) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`;
+}
+function hexToRgba(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function fmtVotes(n) {
+  if (n >= 1000000) return (n/1e6).toFixed(1).replace(/\.0$/,'') + 'M';
+  if (n >= 1000)    return (n/1000).toFixed(1).replace(/\.0$/,'') + 'K';
+  return n.toString();
+}
+function ordinal(n) {
+  const s = [11,12,13].includes(n%100) ? 'th' : (['st','nd','rd'][(n%10)-1] || 'th');
+  return `${n}${s}`;
+}
+const ASKER_COLORS = ['#7C3AED','#059669','#DC2626','#2563EB','#D97706','#0891B2','#BE185D','#EA580C'];
+function askerColor(name) { return ASKER_COLORS[name.charCodeAt(0) % ASKER_COLORS.length]; }
+
+function startLiveVotes(card, player) {
+  currentVotes = player.baseVotes + totalDecisions * 47;
+  const el = card.querySelector('.vote-num');
+  if (!el) return;
+  el.textContent = fmtVotes(currentVotes);
+  clearTimeout(liveVoteInterval);
+  function scheduleNext() {
+    const burst = Math.random() < 0.15;
+    const delay = burst ? 180 + Math.random()*120 : 900 + Math.random()*1400;
+    const inc   = burst ? Math.floor(Math.random()*8)+3 : Math.floor(Math.random()*3)+1;
+    liveVoteInterval = setTimeout(() => {
+      if (!el.isConnected) return;
+      currentVotes += inc;
+      el.textContent = fmtVotes(currentVotes);
+      el.classList.add('bump');
+      setTimeout(() => el.classList.remove('bump'), 130);
+      scheduleNext();
+    }, delay);
+  }
+  scheduleNext();
+}
+
+function buildProgressRing(remaining) {
+  const total = PAGE_SIZE;
+  const r = 10, circ = +(2 * Math.PI * r).toFixed(2);
+  const filled = remaining / total;
+  const offset = +(circ * (1 - filled)).toFixed(2);
+  const trackColor = '#e8ecf4';
+  const fillColor = remaining <= 2 ? '#E55B4D' : remaining <= 4 ? '#F59E0B' : '#7d2eff';
+  return `<div class="card-progress-ring">
+    <svg width="28" height="28" viewBox="0 0 28 28" style="transform:rotate(-90deg)">
+      <circle cx="14" cy="14" r="${r}" fill="none" stroke="${trackColor}" stroke-width="2.5"/>
+      <circle cx="14" cy="14" r="${r}" fill="none" stroke="${fillColor}" stroke-width="2.5"
+        stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+    </svg>
+    <span class="ring-num">${remaining}</span>
+  </div>`;
+}
+
+function buildCard(player, cls, remaining) {
+  const c = document.createElement('div');
+  c.className = `swipe-card ${cls}`;
+  c.dataset.id = player.id;
+  const votes  = player.baseVotes + totalDecisions * 47;
+  const lDark  = darken(player.left.color,  0.70);
+  const lDeep  = darken(player.left.color,  0.36);
+  const rDark  = darken(player.right.color, 0.70);
+  const rDeep  = darken(player.right.color, 0.36);
+  const rankColor = r => r<=10 ? '#F87171' : r<=20 ? '#FCD34D' : '#4ADE80';
+  const rankLabel = p => `<span class="def-rank-inline" style="color:${rankColor(p.defRank)}">(${ordinal(p.defRank)})</span>`;
+  const statusBadge = p => p.status ? `<span class="status-badge ${p.status.toLowerCase()}">${p.status}</span>` : '';
+
+  c.innerHTML = `
+    <div class="card-asker-strip">
+      <div class="card-asker-info">
+        <div class="card-asker-avatar"><div class="card-asker-avatar-inner" style="background:${askerColor(player.asker)}">${player.asker[0]}</div></div>
+        <div class="card-asker-labels">
+          <div class="card-asker-name">${player.asker} asks...</div>
+          <div class="card-asker-meta"><span>${player.week}</span><span style="color:#b5bed3">•</span><span>${player.context}</span></div>
+        </div>
+      </div>
+      ${buildProgressRing(remaining)}
+    </div>
+    <div class="card-body">
+      <div class="player-half lh" id="lh_${player.id}">
+        <div class="half-bg" style="background:linear-gradient(160deg,${lDark} 0%,${lDeep} 100%)"></div>
+        <img class="half-logo" src="${espnLogo(player.left.logo)}" alt="">
+        <img class="p-photo" src="${espnHeadshot(player.left.espnId)}" alt="">
+        <div class="p-info">
+          <div class="p-name">${abbr(player.left)}</div>
+          <div class="p-pos-row"><span class="pos-chip">${player.left.pos}</span>${statusBadge(player.left)}</div>
+          <div class="team-matchup"><img class="matchup-logo" src="${espnLogo(player.left.logo)}" alt="">${player.left.team} ${player.left.opp} ${rankLabel(player.left)}</div>
+          <div class="p-ou">O/U ${player.left.ou}</div>
+          <div class="p-proj"><span class="proj-num">${player.left.proj}</span><span class="proj-sub"> proj</span></div>
+        </div>
+      </div>
+      <div class="or-circle" id="orCircle_${player.id}">or</div>
+      ${cls === 'front' && !hintShown ? `
+      <div class="swipe-hint-overlay" id="swipeOverlay_${player.id}">
+        <span class="hint-finger-l">👈</span>
+        <span class="hint-label">Swipe to pick</span>
+        <span class="hint-finger-r">👉</span>
+      </div>` : ''}
+      <div class="player-half rh" id="rh_${player.id}">
+        <div class="half-bg" style="background:linear-gradient(200deg,${rDark} 0%,${rDeep} 100%)"></div>
+        <img class="half-logo" src="${espnLogo(player.right.logo)}" alt="">
+        <img class="p-photo" src="${espnHeadshot(player.right.espnId)}" alt="">
+        <div class="p-info">
+          <div class="p-name">${abbr(player.right)}</div>
+          <div class="p-pos-row"><span class="pos-chip">${player.right.pos}</span>${statusBadge(player.right)}</div>
+          <div class="team-matchup"><img class="matchup-logo" src="${espnLogo(player.right.logo)}" alt="">${player.right.team} ${player.right.opp} ${rankLabel(player.right)}</div>
+          <div class="p-ou">O/U ${player.right.ou}</div>
+          <div class="p-proj"><span class="proj-num">${player.right.proj}</span><span class="proj-sub"> proj</span></div>
+        </div>
+      </div>
+      <div class="expand-overlay" id="lexp_${player.id}">
+        <div class="exp-bg" style="background:${player.left.color}"></div>
+        <img class="exp-logo" src="${espnLogo(player.left.logo)}" alt="">
+        <img class="exp-photo" src="${espnHeadshot(player.left.espnId)}" alt="">
+      </div>
+      <div class="expand-overlay" id="rexp_${player.id}">
+        <div class="exp-bg" style="background:${player.right.color}"></div>
+        <img class="exp-logo" src="${espnLogo(player.right.logo)}" alt="">
+        <img class="exp-photo" src="${espnHeadshot(player.right.espnId)}" alt="">
+      </div>
+    </div>
+    <div class="card-btm">
+      <div class="swipe-hint-left"><span class="chin-chevron">‹</span> ${abbr(player.left)}</div>
+      <div class="vote-center">👥 <span class="vote-num">${fmtVotes(votes)}</span> Votes</div>
+      <div class="swipe-hint-right">${abbr(player.right)} <span class="chin-chevron">›</span></div>
+    </div>`;
+  return c;
+}
+
+function countUp(el, target, duration) {
+  const start = performance.now();
+  (function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(eased * target) + '%';
+    if (t < 1) requestAnimationFrame(tick);
+  })(performance.now());
+}
+
+function buildResultMoment(player, dir, chosenPct) {
+  const leftPct  = player.lPct;
+  const rightPct = 100 - player.lPct;
+  const lDark = darken(player.left.color,  0.70);
+  const lDeep = darken(player.left.color,  0.36);
+  const rDark = darken(player.right.color, 0.70);
+  const rDeep = darken(player.right.color, 0.36);
+  const isAgree = chosenPct >= 50;
+  const votes = fmtVotes(player.baseVotes + totalDecisions * 47);
+
+  const el = document.createElement('div');
+  el.className = 'result-moment';
+  el.innerHTML = `
+    <div class="rm-body">
+      <div class="rm-half rm-lh" style="background:linear-gradient(160deg,${lDark} 0%,${lDeep} 100%)">
+        <img class="rm-half-logo" src="${espnLogo(player.left.logo)}" alt="">
+        ${dir === 'left' ? '<span class="rm-you-badge">✓ Your pick</span>' : '<span class="rm-badge-spacer"></span>'}
+        <img class="rm-photo" src="${espnHeadshot(player.left.espnId)}" alt="">
+        <div class="rm-name-sm">${abbr(player.left)}</div>
+        <div class="rm-pct-big rm-lpct">0%</div>
+      </div>
+      <div class="rm-half rm-rh" style="background:linear-gradient(200deg,${rDark} 0%,${rDeep} 100%)">
+        <img class="rm-half-logo" src="${espnLogo(player.right.logo)}" alt="">
+        ${dir === 'right' ? '<span class="rm-you-badge">✓ Your pick</span>' : '<span class="rm-badge-spacer"></span>'}
+        <img class="rm-photo" src="${espnHeadshot(player.right.espnId)}" alt="">
+        <div class="rm-name-sm">${abbr(player.right)}</div>
+        <div class="rm-pct-big rm-rpct">0%</div>
+      </div>
+    </div>
+    <div class="rm-bar">
+      <div class="rm-bar-l" style="background:${player.left.color}"></div>
+      <div class="rm-bar-r" style="background:${player.right.color}"></div>
+    </div>
+    <div class="rm-footer">
+      <span class="rm-votes">👥 ${votes} picks</span>
+      <span class="rm-sentiment ${isAgree ? 'agree' : 'bold'}">${isAgree ? '✓ With the crowd' : '⚡ Bold pick'}</span>
+    </div>`;
+  return el;
+}
+
+function renderStack() {
+  clearTimeout(liveVoteInterval);
+  const area = document.getElementById('stackWrap');
+  area.querySelectorAll('.swipe-card, .done-card, .result-moment').forEach(el => el.remove());
+  area.style.height = '290px';
+  area.style.overflow = 'hidden';
+  const rem = PLAYERS.slice(idx);
+  if (!rem.length) { showDoneScreen(area); return; }
+
+  const cls = ['front', 'back-1', 'back-2'];
+  for (let i = Math.min(2, rem.length - 1); i >= 0; i--) {
+    area.appendChild(buildCard(rem[i], cls[i], rem.length - i));
+  }
+  frontCard = area.querySelector('.swipe-card.front');
+  attachDrag(frontCard);
+  startLiveVotes(frontCard, rem[0]);
+}
+
+function showDoneScreen(area) {
+  area.style.height = '290px';
+  area.style.overflow = 'hidden';
+  const sessionPicks = decisions.slice(-PAGE_SIZE);
+  const boldPick = sessionPicks.length ? sessionPicks.reduce((m,d) => d.chosenPct < m.chosenPct ? d : m, sessionPicks[0]) : null;
+  const isBold = boldPick && boldPick.chosenPct < 50;
+
+  const picksHTML = sessionPicks.map((d,i) => `
+    <div class="done-chip${isBold && d===boldPick ? ' is-bold' : ''}" style="animation-delay:${i*55}ms">
+      <div class="done-chip-photo-wrap" style="--tc:${d.chosen.color};--tc-glow:${d.chosen.color}66">
+        <img class="done-chip-photo" src="${espnHeadshot(d.chosen.espnId)}" onerror="this.style.opacity='0'">
+      </div>
+      <span class="done-chip-name">${abbr(d.chosen)}</span>
+      ${isBold && d===boldPick ? '<span style="font-size:13px">⚡</span>' : '<span class="done-chip-check">✓</span>'}
+    </div>`).join('');
+
+  const boldHTML = isBold ? `
+    <div class="done-bold-pick" style="animation-delay:${sessionPicks.length*55+60}ms;opacity:0;transform:translateY(8px);animation:chipIn 0.36s ease both">
+      <div class="done-bold-label">⚡ Bold call of the session</div>
+      <div class="done-bold-matchup">${abbr(boldPick.chosen)} <span class="bold-over">over</span> ${abbr(boldPick.benched)}</div>
+      <div class="done-bold-stat">Only ${boldPick.chosenPct}% agreed with you</div>
+    </div>` : '';
+
+  area.innerHTML = `
+    <div class="done-card">
+      ${sessionPicks.length ? `<div class="done-picks"><div class="done-picks-label">Your picks this session</div><div class="done-chips-grid">${picksHTML}</div>${boldHTML}</div>` : ''}
+      <button class="done-cta" id="pickMoreBtn">↻  Pick more players</button>
+    </div>`;
+
+  document.getElementById('pickMoreBtn').addEventListener('click', () => {
+    pageStart = (pageStart + PAGE_SIZE) % CARD_POOL.length;
+    PLAYERS = CARD_POOL.slice(pageStart, pageStart + PAGE_SIZE);
+    if (PLAYERS.length < PAGE_SIZE) PLAYERS = [...PLAYERS, ...CARD_POOL.slice(0, PAGE_SIZE - PLAYERS.length)];
+    idx = 0;
+    renderStack();
+  });
+}
+
+function setSwipeState(card, player, ratio, dir) {
+  const o = Math.min(ratio, 1);
+  const lexp = card.querySelector(`#lexp_${player.id}`);
+  const rexp = card.querySelector(`#rexp_${player.id}`);
+  const lp   = card.querySelector(`#lexpphoto_${player.id}`);
+  const rp   = card.querySelector(`#rexpphoto_${player.id}`);
+  const orC  = card.querySelector(`#orCircle_${player.id}`);
+  const lPhoto = card.querySelector('.lh .p-photo');
+  const rPhoto = card.querySelector('.rh .p-photo');
+  const pct  = Math.round((1 - o) * 100);
+  const ps   = 0.75 + o * 0.37;
+  const photoScale = 1 + o * 0.2; // grows from 1.0 → 1.2 at full drag
+  if (dir === 'left') {
+    lexp.style.opacity = 1; lexp.style.clipPath = `inset(0 ${pct}% 0 0)`;
+    rexp.style.opacity = 0; rexp.style.clipPath = '';
+    if (lp) lp.style.transform = `scale(${ps})`; if (rp) rp.style.transform = 'scale(0.75)';
+    if (lPhoto) lPhoto.style.transform = `scale(${photoScale})`;
+    if (rPhoto) rPhoto.style.transform = 'scale(1)';
+  } else if (dir === 'right') {
+    rexp.style.opacity = 1; rexp.style.clipPath = `inset(0 0 0 ${pct}%)`;
+    lexp.style.opacity = 0; lexp.style.clipPath = '';
+    if (rp) rp.style.transform = `scale(${ps})`; if (lp) lp.style.transform = 'scale(0.75)';
+    if (rPhoto) rPhoto.style.transform = `scale(${photoScale})`;
+    if (lPhoto) lPhoto.style.transform = 'scale(1)';
+  } else {
+    lexp.style.opacity = 0; lexp.style.clipPath = '';
+    rexp.style.opacity = 0; rexp.style.clipPath = '';
+    if (lp) lp.style.transform = 'scale(0.75)'; if (rp) rp.style.transform = 'scale(0.75)';
+    if (lPhoto) lPhoto.style.transform = 'scale(1)';
+    if (rPhoto) rPhoto.style.transform = 'scale(1)';
+  }
+  if (orC) orC.style.opacity = 1 - o * 1.5;
+}
+
+function attachDrag(card) {
+  const player = PLAYERS[idx];
+  const onStart = e => {
+    if (card.classList.contains('fly-out')) return;
+    isDragging = true;
+    lockAxis = null;
+    const t = e.touches ? e.touches[0] : e;
+    startX = t.clientX; startY = t.clientY; curX = 0; velX = 0; lastX = startX;
+    card.style.transition = 'none';
+    const overlay = card.querySelector('.swipe-hint-overlay');
+    if (overlay) {
+      hintShown = true;
+      overlay.classList.add('gone');
+      setTimeout(() => overlay.remove(), 300);
+    }
+  };
+  const onMove = e => {
+    if (!isDragging) return;
+    const t = e.touches ? e.touches[0] : e;
+    if (!lockAxis) {
+      const dx = Math.abs(t.clientX - startX), dy = Math.abs(t.clientY - startY);
+      if (dx > 4 || dy > 4) lockAxis = dx > dy ? 'h' : 'v';
+    }
+    if (lockAxis === 'v') return;
+    if (e.cancelable) e.preventDefault();
+    velX = t.clientX - lastX; lastX = t.clientX; curX = t.clientX - startX;
+    card.style.transform = `translateX(${curX}px) translateY(${-Math.abs(curX)*0.025}px) rotate(${curX*0.055}deg)`;
+    const ratio = Math.abs(curX) / 55;
+    if (curX > 12) setSwipeState(card, player, ratio, 'right');
+    else if (curX < -12) setSwipeState(card, player, ratio, 'left');
+    else setSwipeState(card, player, 0, null);
+  };
+  const onEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    lockAxis = null;
+    if (curX > 58 || velX > 6) commitSwipe('right');
+    else if (curX < -58 || velX < -6) commitSwipe('left');
+    else {
+      card.style.transition = 'transform 0.42s cubic-bezier(0.34,1.56,0.64,1)';
+      card.style.transform = '';
+      setSwipeState(card, player, 0, null);
+    }
+  };
+  card.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  card.addEventListener('touchstart', onStart, { passive: true });
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('touchend', onEnd);
+  card.querySelector('.swipe-hint-left').addEventListener('click', () => commitSwipe('left'));
+  card.querySelector('.swipe-hint-right').addEventListener('click', () => commitSwipe('right'));
+}
+
+function commitSwipe(dir) {
+  if (!frontCard) return;
+  clearTimeout(liveVoteInterval);
+  const player    = PLAYERS[idx];
+  const chosen    = dir === 'right' ? player.right : player.left;
+  const benched   = dir === 'right' ? player.left  : player.right;
+  const chosenPct = dir === 'right' ? (100 - player.lPct) : player.lPct;
+  setSwipeState(frontCard, player, 1, dir);
+  const flyX = dir === 'right' ? window.innerWidth*1.5 : -window.innerWidth*1.5;
+  frontCard.classList.add('fly-out');
+  frontCard.style.transition = 'transform 0.40s cubic-bezier(0.4,0,0.2,1), opacity 0.36s ease';
+  frontCard.style.transform  = `translateX(${flyX}px) rotate(${dir==='right'?18:-18}deg)`;
+  frontCard.style.opacity    = '0';
+  const b1 = document.querySelector('.swipe-card.back-1');
+  const b2 = document.querySelector('.swipe-card.back-2');
+  if (b1) { b1.style.transition = 'transform 0.3s cubic-bezier(0.34,1.2,0.64,1)'; b1.style.transform = 'translateY(0)'; }
+  if (b2) { b2.style.transition = 'transform 0.3s cubic-bezier(0.34,1.2,0.64,1)'; b2.style.transform = 'translateY(12px)'; }
+  decisions.push({ player, dir, chosen, benched, chosenPct });
+  totalDecisions++; idx++;
+  lastResult = { player, chosen, benched, chosenPct };
+  setTimeout(() => {
+    const rm = buildResultMoment(player, dir, chosenPct);
+    document.getElementById('stackWrap').appendChild(rm);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      rm.classList.add('show');
+      setTimeout(() => {
+        const lPct = player.lPct, rPct = 100 - player.lPct;
+        rm.querySelector('.rm-lh').style.flexGrow = lPct;
+        rm.querySelector('.rm-rh').style.flexGrow = rPct;
+        rm.querySelector('.rm-bar-l').style.flexGrow = lPct;
+        rm.querySelector('.rm-bar-r').style.flexGrow = rPct;
+        countUp(rm.querySelector('.rm-lpct'), lPct, 820);
+        countUp(rm.querySelector('.rm-rpct'), rPct, 820);
+      }, 240);
+    }));
+    let dismissed = false;
+    function dismissMoment() {
+      if (dismissed) return; dismissed = true;
+      clearTimeout(autoTimer);
+      rm.style.transition = 'opacity 0.16s ease';
+      rm.style.opacity = '0';
+      setTimeout(() => { rm.remove(); renderStack(); }, 160);
+    }
+    const autoTimer = setTimeout(dismissMoment, 1600);
+    rm.addEventListener('click', dismissMoment, { once: true });
+  }, 380);
+}
+
+function defPtsAllowed(pos, defRank) {
+  const [min, max] = { QB:[12,28], RB:[10,24], WR:[9,22], TE:[6,15] }[pos] || [10,22];
+  return (max - (max - min) * (defRank - 1) / 29).toFixed(1);
+}
+
+function showResultBar(player, chosen, benched, chosenPct) {
+  const wrap    = document.getElementById('resultBarWrap');
+  const inner   = document.getElementById('insightInner');
+  const oppTeam = chosen.opp.replace(/^[@vs\s]+/, '').trim();
+  const pts     = defPtsAllowed(chosen.pos, chosen.defRank);
+  const isTough = chosen.defRank <= 10, isMid = chosen.defRank <= 20;
+  const rankColor = isTough ? '#dc2626' : isMid ? '#b45309' : '#15803d';
+  const rankBg    = isTough ? '#fef2f2' : isMid ? '#fffbeb' : '#dcfce7';
+
+  inner.style.backgroundColor = hexToRgba(chosen.color, 0.07);
+  inner.style.setProperty('--accent', chosen.color);
+
+  document.getElementById('insightAvatar').style.setProperty('--tc', chosen.color);
+  document.getElementById('insightPhoto').src    = espnHeadshot(chosen.espnId);
+  document.getElementById('insightName').textContent = abbr(chosen);
+  document.getElementById('insightOppLogo').src  = espnLogo(chosen.logo);
+
+  document.getElementById('insightOppLabel').innerHTML =
+    `<img class="insight-opp-logo-sm" src="${espnLogo(oppTeam)}"> ${oppTeam} defense`;
+  document.getElementById('insightStatLine').innerHTML =
+    `Allows avg <strong style="color:${rankColor}">${pts}</strong> pts to ${chosen.pos}s`;
+
+  const pill = document.getElementById('insightRankPill');
+  pill.textContent      = `${ordinal(chosen.defRank)} vs ${chosen.pos}s`;
+  pill.style.background = rankBg;
+  pill.style.color      = rankColor;
+
+  wrap.classList.add('visible');
+}
+
+// Onboarding
+(function() {
+  const sheet=document.getElementById('obSheet'), backdrop=document.getElementById('obBackdrop');
+  const cta=document.getElementById('obCta'), close=document.getElementById('obClose');
+  let dismissed=false;
+  function dismiss() {
+    if (dismissed) return; dismissed=true;
+    sheet.style.transition='transform 0.32s cubic-bezier(0.4,0,0.2,1)';
+    sheet.style.transform='translateX(-50%) translateY(100%)';
+    backdrop.style.opacity='0'; backdrop.style.pointerEvents='none';
+    setTimeout(() => {
+      document.querySelector('.poll-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 350);
+  }
+  setTimeout(() => { sheet.classList.add('visible'); backdrop.classList.add('visible'); }, 400);
+  cta.addEventListener('click', dismiss);
+  close.addEventListener('click', dismiss);
+  backdrop.addEventListener('click', dismiss);
+})();
+
+renderStack();
+</script>
+</body>
+</html>
